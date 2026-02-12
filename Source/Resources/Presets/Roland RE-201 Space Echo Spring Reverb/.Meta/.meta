@@ -1,0 +1,15 @@
+# Roland RE-201 Space Echo Spring Reverb
+
+## 核心磁带区别
+- **Tape 468 (Agfa/RMGI 468)**: 声音明亮、现代、具有更强的瞬态和高频细节 (Bright/Edgier)。
+- **Tape 911 (Basf/RMGI 911)**: 声音温暖、复古、具有更高的饱和度和圆润感 (Warm/Saturated)。
+
+## 预设结构
+本库已重组为预设友好的目录结构。
+- 每个文件夹代表一个特定的设置组合。
+- 包含 Clean (纯弹簧) 以及与内置 Chorus 效果的混合。
+- 对 Stereo 和 Mono 版本进行了独立分装。
+
+## 技术规格
+- 采样率: 96kHz
+- 格式: WAV

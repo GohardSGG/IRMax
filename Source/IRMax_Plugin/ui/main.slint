@@ -1,0 +1,211 @@
+import "../../../Resources/Font/Manrope/static/Manrope-Regular.ttf";
+import "../../../Resources/Font/Manrope/static/Manrope-Medium.ttf";
+import "../../../Resources/Font/Manrope/static/Manrope-Bold.ttf";
+import "../../../Resources/Font/Manrope/static/Manrope-ExtraBold.ttf";
+import "../../../Resources/Font/Manrope/static/Manrope-SemiBold.ttf";
+import { ThemeTokens } from "globals/theme.slint";
+import { HomePage } from "pages/home_page.slint";
+
+export component AppWindow inherits Window {
+    in-out property <float> mix_value: 1.0;
+    in-out property <string> mix_text: "100%";
+    callback mix_start_change();
+    callback mix_changed(float);
+    callback mix_end_change();
+    in-out property <float> output_value: 0.6666667;
+    in-out property <string> output_text: "0.0";
+    in-out property <image> spectrum_image;
+    in-out property <string> spectrum_status_text: "No IR Loaded";
+    in-out property <string> ir_meta_text: "LEN: -- | RATE: -- | BIT: -- | FILES: --";
+    in-out property <string> channel_text: "CH --x--";
+    in-out property <string> folder_path_text: "No Folder Loaded";
+    in-out property <string> backend_label: "CUDA";
+    in-out property <bool> backend_switch_enabled: false;
+    in-out property <bool> backend_switch_pending: false;
+    in-out property <string> log_path_label: "LOG: --";
+    in-out property <bool> dark_mode_enabled: false;
+    in-out property <int> guard_profile_value: 0;
+    in-out property <string> guard_profile_text: "Baseline";
+    in-out property <bool> spectrum_has_data: false;
+    in-out property <bool> spectrum_loading: false;
+    in-out property <int> spectrum_rows: 1;
+    in-out property <int> spectrum_cols: 2;
+    in-out property <[float]> spectrum_cell_values: [];
+    in-out property <[string]> spectrum_row_labels: [];
+    callback output_start_change();
+    callback output_changed(float);
+    callback output_end_change();
+    in-out property <int> active_slot: 0;
+    in-out property <bool> slot1_occupied: false;
+    in-out property <bool> slot2_occupied: false;
+    in-out property <bool> slot3_occupied: false;
+    in-out property <bool> slot4_occupied: false;
+    in-out property <bool> slot5_occupied: false;
+    in-out property <bool> save_mode_active: false;
+    in-out property <string> save_name_text: "";
+    in-out property <bool> toast_visible: false;
+    in-out property <string> toast_message: "";
+    in-out property <bool> toast_is_error: false;
+    in-out property <int> toast_nonce: 0;
+    callback select_slot(int);
+    callback clear_slot(int);
+    callback switch_backend();
+    callback open_log_file();
+    callback toggle_theme_mode();
+    callback guard_profile_changed(int);
+    in-out property <string> selected_preset_label: "PRESET";
+    in-out property <bool> preset_insert_enabled: false;
+    in-out property <[string]> preset_leaf_items: [];
+    in-out property <[int]> preset_menu_entry_depths: [];
+    in-out property <[int]> preset_menu_entry_rows: [];
+    in-out property <[bool]> preset_menu_entry_is_folder: [];
+    in-out property <[int]> preset_menu_column_rows: [];
+    in-out property <[int]> preset_menu_selected_rows: [];
+    in-out property <int> preset_menu_column_count: 1;
+    in-out property <int> preset_menu_max_rows: 0;
+    in-out property <int> preset_selected_index: -1;
+    in-out property <bool> preset_picker_open: false;
+    in-out property <bool> slot_full_dialog_open: false;
+    in-out property <string> slot_full_dialog_title: "SLOT BANK FULL";
+    in-out property <string> slot_full_dialog_message: "All 5 slots are occupied. Please clear one slot and try INSERT again.";
+    callback open_preset_folder();
+    callback request_preset_leaf_items();
+    callback select_preset_leaf();
+    callback choose_preset_leaf(int);
+    callback hover_preset_leaf(int);
+    callback insert_selected_preset();
+    callback begin_save_preset();
+    callback cancel_save_preset();
+    callback confirm_save_preset();
+    callback load_ir_folder();
+    callback handle_resize_request(float, float);
+    title: "IRMax Slint Preview";
+    default-font-family: "Manrope";
+    preferred-width: 980px;
+    preferred-height: 654px;
+    min-width: 760px;
+    min-height: 460px;
+    background: ThemeTokens.bg-app;
+    HomePage {
+        width: parent.width;
+        height: parent.height;
+        mix_value <=> root.mix_value;
+        mix_text <=> root.mix_text;
+        output_value <=> root.output_value;
+        output_text <=> root.output_text;
+        spectrum_image <=> root.spectrum_image;
+        spectrum_status_text <=> root.spectrum_status_text;
+        ir_meta_text <=> root.ir_meta_text;
+        channel_text <=> root.channel_text;
+        folder_path_text <=> root.folder_path_text;
+        backend_label <=> root.backend_label;
+        backend_switch_enabled <=> root.backend_switch_enabled;
+        backend_switch_pending <=> root.backend_switch_pending;
+        log_path_label <=> root.log_path_label;
+        dark_mode_enabled <=> root.dark_mode_enabled;
+        guard_profile_value <=> root.guard_profile_value;
+        guard_profile_text <=> root.guard_profile_text;
+        spectrum_has_data <=> root.spectrum_has_data;
+        spectrum_loading <=> root.spectrum_loading;
+        spectrum_rows <=> root.spectrum_rows;
+        spectrum_cols <=> root.spectrum_cols;
+        spectrum_cell_values <=> root.spectrum_cell_values;
+        spectrum_row_labels <=> root.spectrum_row_labels;
+        active_slot <=> root.active_slot;
+        slot1_occupied <=> root.slot1_occupied;
+        slot2_occupied <=> root.slot2_occupied;
+        slot3_occupied <=> root.slot3_occupied;
+        slot4_occupied <=> root.slot4_occupied;
+        slot5_occupied <=> root.slot5_occupied;
+        save_mode_active <=> root.save_mode_active;
+        save_name_text <=> root.save_name_text;
+        toast_visible <=> root.toast_visible;
+        toast_message <=> root.toast_message;
+        toast_is_error <=> root.toast_is_error;
+        toast_nonce <=> root.toast_nonce;
+        selected_preset_label <=> root.selected_preset_label;
+        preset_insert_enabled <=> root.preset_insert_enabled;
+        preset_leaf_items <=> root.preset_leaf_items;
+        preset_menu_entry_depths <=> root.preset_menu_entry_depths;
+        preset_menu_entry_rows <=> root.preset_menu_entry_rows;
+        preset_menu_entry_is_folder <=> root.preset_menu_entry_is_folder;
+        preset_menu_column_rows <=> root.preset_menu_column_rows;
+        preset_menu_selected_rows <=> root.preset_menu_selected_rows;
+        preset_menu_column_count <=> root.preset_menu_column_count;
+        preset_menu_max_rows <=> root.preset_menu_max_rows;
+        preset_selected_index <=> root.preset_selected_index;
+        preset_picker_open <=> root.preset_picker_open;
+        slot_full_dialog_open <=> root.slot_full_dialog_open;
+        slot_full_dialog_title <=> root.slot_full_dialog_title;
+        slot_full_dialog_message <=> root.slot_full_dialog_message;
+        mix_start_change => {
+            root.mix_start_change();
+        }
+        mix_changed(next) => {
+            root.mix_changed(next);
+        }
+        mix_end_change => {
+            root.mix_end_change();
+        }
+        output_start_change => {
+            root.output_start_change();
+        }
+        output_changed(next) => {
+            root.output_changed(next);
+        }
+        output_end_change => {
+            root.output_end_change();
+        }
+        select_slot(slot_index) => {
+            root.select_slot(slot_index);
+        }
+        clear_slot(slot_index) => {
+            root.clear_slot(slot_index);
+        }
+        open_preset_folder => {
+            root.open_preset_folder();
+        }
+        request_preset_leaf_items => {
+            root.request_preset_leaf_items();
+        }
+        select_preset_leaf => {
+            root.select_preset_leaf();
+        }
+        choose_preset_leaf(index) => {
+            root.choose_preset_leaf(index);
+        }
+        hover_preset_leaf(index) => {
+            root.hover_preset_leaf(index);
+        }
+        insert_selected_preset => {
+            root.insert_selected_preset();
+        }
+        begin_save_preset => {
+            root.begin_save_preset();
+        }
+        cancel_save_preset => {
+            root.cancel_save_preset();
+        }
+        confirm_save_preset => {
+            root.confirm_save_preset();
+        }
+        load_ir_folder => {
+            root.load_ir_folder();
+        }
+        switch_backend => {
+            root.switch_backend();
+        }
+        open_log_file => {
+            root.open_log_file();
+        }
+        toggle_theme_mode => {
+            root.toggle_theme_mode();
+        }
+        guard_profile_changed(profile) => {
+            root.guard_profile_changed(profile);
+        }
+        handle_resize_request(width_px, height_px) => {
+            root.handle_resize_request(width_px, height_px);
+        }
+    }
+}

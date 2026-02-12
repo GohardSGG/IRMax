@@ -1,0 +1,55 @@
+[package]
+name = "plugin-canvas"
+version = "0.0.0"
+edition = "2024"
+
+authors = ["Jussi Viiri <jussi@viiri-audio.com>"]
+readme = "README.md"
+repository = "https://github.com/ilmai/plugin-things"
+license = "MIT"
+
+[dependencies]
+bitflags = "2.9"
+cursor-icon.workspace = true
+keyboard-types.workspace = true
+raw-window-handle.workspace = true
+uuid = { version = "1.4", features = ["fast-rng", "v4"] }
+
+[target.'cfg(target_os="linux")'.dependencies]
+sys-locale = "0.3"
+x11rb = { version = "0.13", features = ["allow-unsafe-code", "cursor", "render", "resource_manager", "xfixes", "xkb"] }
+xkbcommon = { version = "0.8", features = ["x11"] }
+
+[target.'cfg(target_os="macos")'.dependencies]
+objc2 = { version = "0.6", features = ["verify"] }
+objc2-app-kit = { version = "0.3", features = ["NSCursor", "NSDragging", "NSEvent", "NSPasteboard", "NSPasteboardItem", "NSScreen", "NSTrackingArea"] }
+objc2-core-foundation = { version = "0.3", features = ["CFCGTypes"] }
+objc2-core-graphics = { version = "0.3", features = ["CGError", "CGRemoteOperation"] }
+objc2-core-video = "0.3"
+objc2-foundation = { version = "0.3", features = ["NSOperation", "NSRunLoop"] }
+objc2-quartz-core = { version = "0.3", features = ["CADisplayLink"] }
+
+[target.'cfg(target_os="windows")'.dependencies]
+windows-core = "0.61"
+
+[target.'cfg(target_os="windows")'.dependencies.windows]
+version = "0.61"
+features = [
+    "Win32_Foundation",
+    "Win32_Graphics_Dwm",
+    "Win32_Graphics_Dxgi",
+    "Win32_Graphics_Dxgi_Common",
+    "Win32_Graphics_Gdi",
+    "Win32_System_Com",
+    "Win32_System_Com_StructuredStorage",
+    "Win32_System_Ole",
+    "Win32_System_SystemInformation",
+    "Win32_System_SystemServices",
+    "Win32_System_Threading",
+    "Win32_UI_Controls",
+    "Win32_UI_HiDpi",
+    "Win32_UI_Input_KeyboardAndMouse",
+    "Win32_UI_Input_Ime",
+    "Win32_UI_Shell",
+    "Win32_UI_WindowsAndMessaging",
+]

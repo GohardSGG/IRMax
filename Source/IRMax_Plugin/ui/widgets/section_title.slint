@@ -1,0 +1,28 @@
+import { ThemeTokens } from "../globals/theme.slint";
+
+export component SectionTitle inherits Rectangle {
+    in property <string> title: "Section";
+    in property <string> subtitle: "";
+
+    background: transparent;
+    height: subtitle == "" ? 24px : 40px;
+
+    Text {
+        text: root.title;
+        color: ThemeTokens.text-dark;
+        font-size: 16px;
+        font-weight: 700;
+        x: 0px;
+        y: 0px;
+    }
+
+    Text {
+        visible: subtitle != "";
+        text: root.subtitle;
+        color: ThemeTokens.text-light;
+        font-size: 11px;
+        x: 0px;
+        y: 22px;
+    }
+}
+

@@ -1,0 +1,77 @@
+import { ThemeTokens } from "../globals/theme.slint";
+
+export component MixSlider inherits Rectangle {
+    in-out property <float> value: 1.0;
+    in property <float> default_value: 1.0;
+    in property <float> snap_steps: 0.0;
+    private property <bool> changing: false;
+
+    callback start_change();
+    callback changed(float);
+    callback end_change();
+
+    width: 118px;
+    height: 18px;
+    background: transparent; // No more bulky enclosure
+
+    // The Track (Thin Line)
+    Rectangle {
+        width: parent.width;
+        height: 2px;
+        y: (parent.height - self.height) / 2;
+        background: ThemeTokens.border-medium;
+        border-radius: 1px;
+    }
+
+    // The Thumb (Sleek handle)
+    Rectangle {
+        width: 10px;
+        height: 14px;
+        y: (parent.height - self.height) / 2;
+        border-radius: 2px;
+        background: touch.pressed ? ThemeTokens.accent-hover : ThemeTokens.accent;
+        border-width: 1px;
+        border-color: ThemeTokens.shadow-soft;
+        x: (root.width - self.width) * root.value;
+        animate background { duration: 150ms; }
+    }
+
+    touch := TouchArea {
+        property <float> pressed_value;
+
+        double-clicked => {
+            root.start_change();
+            root.value = root.default_value;
+            root.changed(root.default_value);
+            root.end_change();
+        }
+
+        pointer-event(event) => {
+            if (event.button == PointerEventButton.left) {
+                if (event.kind == PointerEventKind.down) {
+                    self.pressed_value = root.value;
+                    root.start_change();
+                    root.changing = true;
+                } else if (event.kind == PointerEventKind.up || event.kind == PointerEventKind.cancel) {
+                    if (root.changing) {
+                        root.end_change();
+                    }
+                    root.changing = false;
+                }
+            }
+            if (root.changing && event.kind == PointerEventKind.cancel) {
+                root.end_change();
+                root.changing = false;
+            }
+        }
+
+        moved => {
+            if (self.enabled && self.pressed) {
+                let raw = clamp(self.pressed_value + (touch.mouse-x - touch.pressed-x) / (root.width - 10px), 0.0, 1.0);
+                let next = root.snap_steps > 0.0 ? Math.round(raw * root.snap_steps) / root.snap_steps : raw;
+                root.value = next;
+                root.changed(next);
+            }
+        }
+    }
+}

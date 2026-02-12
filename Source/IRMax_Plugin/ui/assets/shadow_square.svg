@@ -1,0 +1,10 @@
+<svg width="100" height="100" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <filter id="blur">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="2" />
+    </filter>
+  </defs>
+  <!-- Square centered at 50,50, size ~48x48. Opacity controlled here or in Slint -->
+  <!-- Fill opacity 0.6 to look like shadow -->
+  <rect x="26" y="26" width="48" height="48" rx="1" ry="1" fill="black" fill-opacity="0.6" filter="url(#blur)" />
+</svg>

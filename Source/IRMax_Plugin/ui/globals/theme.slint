@@ -1,0 +1,63 @@
+export global ThemeTokens {
+    in property <bool> dark-mode: false;
+
+    in property <color> bg-app: ThemeTokens.dark-mode ? #111318 : #e5e7eb;
+    in property <color> bg-main: ThemeTokens.dark-mode ? #171b22 : #ffffff;
+    in property <color> bg-sidebar: ThemeTokens.dark-mode ? #1e242d : #f8fafc;
+    in property <color> bg-grid: ThemeTokens.dark-mode ? #20262f : #f2f3f5;
+    in property <color> bg-dark-panel: ThemeTokens.dark-mode ? #0f1319 : #17191e;
+
+    in property <color> border-light: ThemeTokens.dark-mode ? #334155 : #e2e8f0;
+    in property <color> border-medium: ThemeTokens.dark-mode ? #475569 : #cbd5e1;
+    in property <color> border-dark: ThemeTokens.dark-mode ? #94a3b8 : #64748b;
+    in property <color> border-main: ThemeTokens.dark-mode ? #cbd5e1 : #1e293b;
+    in property <color> border-dark-panel: ThemeTokens.dark-mode ? #475569 : #2e323b;
+
+    in property <color> text-dark: ThemeTokens.dark-mode ? #f1f5f9 : #0f172a;
+    in property <color> text-medium: ThemeTokens.dark-mode ? #cbd5e1 : #475569;
+    in property <color> text-light: ThemeTokens.dark-mode ? #94a3b8 : #94a3b8;
+
+    in property <color> accent: ThemeTokens.dark-mode ? #64748b : #1e293b;
+    in property <color> grid: ThemeTokens.dark-mode ? #293341 : #f5f5f5;
+    in property <color> accent-hover: ThemeTokens.dark-mode ? #475569 : #334155;
+    in property <color> text-on-accent: #ffffff;
+    in property <color> text-disabled: ThemeTokens.dark-mode ? #73839a : #8a95a3;
+    in property <color> button-disabled-bg: ThemeTokens.dark-mode ? #2a313c : #d9dde3;
+
+    in property <color> surface-plain: ThemeTokens.dark-mode ? #1f2630 : #f7f7f7;
+    in property <color> surface-hover: ThemeTokens.dark-mode ? #2a3442 : #eef1f5;
+    in property <color> surface-active: ThemeTokens.dark-mode ? #222c38 : #f1f5f9;
+    in property <color> surface-active-hover: ThemeTokens.dark-mode ? #2c3644 : #eef2f7;
+
+    in property <color> picker-bg: ThemeTokens.dark-mode ? #1c2330 : #f8fafc;
+    in property <color> picker-row-hover: ThemeTokens.dark-mode ? #273447 : #e6edf7;
+    in property <color> picker-row-selected: ThemeTokens.dark-mode ? #2f3d52 : #dbeafe;
+    in property <color> picker-row-indicator: ThemeTokens.dark-mode ? #60a5fa : #3b82f6;
+
+    in property <color> input-bg: ThemeTokens.dark-mode ? #1b222d : #ffffff;
+    in property <color> input-bg-hover: ThemeTokens.dark-mode ? #242d3b : #f8fafc;
+    in property <color> input-bg-soft: ThemeTokens.dark-mode ? #202936 : #fdfdfe;
+    in property <color> input-focus-border: ThemeTokens.dark-mode ? #94a3b8 : #64748b70;
+
+    in property <color> overlay-soft: ThemeTokens.dark-mode ? #000000b0 : #00000080;
+    in property <color> overlay-medium: ThemeTokens.dark-mode ? #000000b0 : #00000088;
+    in property <color> overlay-strong: ThemeTokens.dark-mode ? #000000b8 : #00000099;
+
+    in property <color> shadow-soft: ThemeTokens.dark-mode ? #00000045 : #00000020;
+    in property <color> shadow-medium: ThemeTokens.dark-mode ? #0000005a : #00000040;
+    in property <color> shadow-light: ThemeTokens.dark-mode ? #00000032 : #00000018;
+
+    in property <color> matrix-label: ThemeTokens.dark-mode ? #dbe8ffb0 : #ffffff96;
+    in property <color> dialog-close-hover: ThemeTokens.dark-mode ? #283241 : #e9edf3;
+
+    in property <color> knob-arc: ThemeTokens.dark-mode ? #ef4444 : #df2f2f;
+    in property <color> knob-diamond: ThemeTokens.dark-mode ? #94a3b8 : #7d8ca0;
+    in property <color> knob-needle: ThemeTokens.dark-mode ? #cbd5e1 : #2f3f57;
+
+    in property <color> matrix-line: ThemeTokens.dark-mode ? #8b98ab : #2a2f37;
+    in property <color> matrix-cell: ThemeTokens.dark-mode ? #0a0d12 : #0f1116;
+    in property <color> matrix-accent: ThemeTokens.dark-mode ? #60a5fa : #1c7dd8;
+    in property <int> font-weight-bold: 800;
+    in property <int> font-weight-medium: 700;
+    in property <int> font-weight-regular: 600;
+}

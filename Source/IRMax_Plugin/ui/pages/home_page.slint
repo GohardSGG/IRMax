@@ -1,0 +1,2039 @@
+﻿import { ThemeTokens } from "../globals/theme.slint";
+import { SlotButton } from "../widgets/slot_button.slint";
+import { TechKnob } from "../widgets/tech_knob.slint";
+import { MixSlider } from "../widgets/mix_slider.slint";
+import { ScrollView } from "std-widgets.slint";
+
+export component HomePage inherits Rectangle {
+    background: ThemeTokens.bg-app;
+    in-out property <float> mix_value: 1.0;
+    in-out property <string> mix_text: "100%";
+    callback mix_start_change();
+    callback mix_changed(float);
+    callback mix_end_change();
+    in-out property <float> output_value: 0.6666667;
+    in-out property <string> output_text: "0.0";
+    in-out property <image> spectrum_image;
+    in-out property <string> spectrum_status_text: "No IR Loaded";
+    in-out property <string> ir_meta_text: "LEN: -- | RATE: -- | BIT: -- | FILES: --";
+    in-out property <bool> spectrum_has_data: false;
+    in-out property <bool> spectrum_loading: false;
+    in-out property <int> spectrum_rows: 1;
+    in-out property <int> spectrum_cols: 2;
+    in-out property <[float]> spectrum_cell_values: [];
+    in-out property <[string]> spectrum_row_labels: [];
+    in-out property <string> channel_text: "CH --x--";
+    in-out property <string> folder_path_text: "No Folder Loaded";
+    in-out property <int> loading_pulse_step: 0;
+    in-out property <string> backend_label: "CUDA";
+    in-out property <bool> backend_switch_enabled: false;
+    in-out property <bool> backend_switch_pending: false;
+    in-out property <string> log_path_label: "LOG: --";
+    in-out property <bool> dark_mode_enabled <=> ThemeTokens.dark-mode;
+    callback output_start_change();
+    callback output_changed(float);
+    callback output_end_change();
+    in-out property <string> selected_preset_label: "PRESET";
+    in-out property <bool> preset_insert_enabled: false;
+    in-out property <[string]> preset_leaf_items: [];
+    in-out property <[int]> preset_menu_entry_depths: [];
+    in-out property <[int]> preset_menu_entry_rows: [];
+    in-out property <[bool]> preset_menu_entry_is_folder: [];
+    in-out property <[int]> preset_menu_column_rows: [];
+    in-out property <[int]> preset_menu_selected_rows: [];
+    in-out property <int> preset_menu_column_count: 1;
+    in-out property <int> preset_menu_max_rows: 0;
+    in-out property <int> preset_selected_index: -1;
+    in-out property <bool> preset_picker_open: false;
+    in-out property <bool> settings_open: false;
+    in-out property <bool> slot_full_dialog_open: false;
+    in-out property <string> slot_full_dialog_title: "SLOT BANK FULL";
+    in-out property <string> slot_full_dialog_message: "All 5 slots are occupied. Please clear one slot and try INSERT again.";
+    in-out property <int> guard_profile_value: 0;
+    in-out property <string> guard_profile_text: "Baseline";
+    callback open_preset_folder();
+    callback request_preset_leaf_items();
+    callback select_preset_leaf();
+    callback choose_preset_leaf(int);
+    callback hover_preset_leaf(int);
+    callback insert_selected_preset();
+    callback begin_save_preset();
+    callback cancel_save_preset();
+    callback confirm_save_preset();
+    callback load_ir_folder();
+    callback handle_resize_request(float, float);
+    in-out property <int> active_slot: 0;
+    in-out property <bool> slot1_occupied: false;
+    in-out property <bool> slot2_occupied: false;
+    in-out property <bool> slot3_occupied: false;
+    in-out property <bool> slot4_occupied: false;
+    in-out property <bool> slot5_occupied: false;
+    in-out property <bool> save_mode_active: false;
+    in-out property <string> save_name_text: "";
+    in-out property <bool> toast_visible: false;
+    in-out property <string> toast_message: "";
+    in-out property <bool> toast_is_error: false;
+    in-out property <int> toast_nonce: 0;
+    property <bool> active-slot-occupied:
+        root.active_slot < 0 ? false :
+        root.active_slot == 0 ? root.slot1_occupied :
+        root.active_slot == 1 ? root.slot2_occupied :
+        root.active_slot == 2 ? root.slot3_occupied :
+        root.active_slot == 3 ? root.slot4_occupied :
+        root.slot5_occupied;
+    property <bool> save-button-enabled: root.active-slot-occupied && !root.spectrum_loading && !root.save_mode_active;
+    property <bool> preset-preview-mode: root.active_slot < 0 && root.spectrum_has_data && !root.spectrum_loading;
+    in-out property <int> settings_guard_draft_value: 0;
+    property <int> settings_guard_draft_value_clamped: root.settings_guard_draft_value < -2 ? -2 : (root.settings_guard_draft_value > 1 ? 1 : root.settings_guard_draft_value);
+    property <string> settings_guard_draft_text: root.settings_guard_draft_value_clamped == -2 ? "Aggressive 2" : (root.settings_guard_draft_value_clamped == -1 ? "Aggressive 1" : (root.settings_guard_draft_value_clamped == 1 ? "Stable 1" : "Baseline"));
+    property <bool> settings_has_pending_changes: root.settings_guard_draft_value_clamped != root.guard_profile_value;
+    callback select_slot(int);
+    callback clear_slot(int);
+    callback switch_backend();
+    callback open_log_file();
+    callback toggle_theme_mode();
+    callback guard_profile_changed(int);
+    property <float> design-width: 980.0;
+    property <float> design-height: 654.0;
+    property <float> ui_scale: Math.max(0.1, Math.min(root.width / (root.design-width * 1px), root.height / (root.design-height * 1px)));
+    property <length> topbar-height: 43px * root.ui_scale;
+    property <length> topbar-side-margin: 20px * root.ui_scale;
+    property <length> footer-height: 32px * root.ui_scale;
+    property <length> left-panel-width: 210px * root.ui_scale;
+    property <length> main-padding: 14px * root.ui_scale;
+    property <length> preset-picker-max-height: 280px * root.ui_scale;
+    property <length> preset-picker-row-height: 26px * root.ui_scale;
+    property <length> preset-picker-column-width: 252px * root.ui_scale;
+    property <int> preset-menu-max-columns: 8;
+    property <bool> spectrum-panel-active: root.spectrum_has_data || root.spectrum_loading;
+    property <float> spectrum-panel-opacity: root.spectrum_has_data || root.spectrum_loading ? 1.0 : 0.0;
+    property <float> spectrum-visual-opacity: root.spectrum_has_data && !root.spectrum_loading ? 1.0 : 0.0;
+    loading-pulse-timer := Timer {
+        interval: 220ms;
+        running: root.spectrum_loading;
+        triggered => {
+            root.loading_pulse_step = Math.mod(root.loading_pulse_step + 1, 4);
+        }
+    }
+
+    toast-hide-timer := Timer {
+        interval: 2800ms;
+        running: false;
+        triggered => {
+            toast-hide-timer.running = false;
+            root.toast_visible = false;
+        }
+    }
+
+    Rectangle {
+        y: 0px * root.ui_scale;
+        z: 10; // Ensure shadow renders over content below
+        width: parent.width;
+        height: root.topbar-height;
+        background: ThemeTokens.bg-main;
+        border-width: 0px * root.ui_scale;
+        drop-shadow-blur: 6px * root.ui_scale;
+        drop-shadow-color: ThemeTokens.shadow-soft; // Subtle shadow
+        drop-shadow-offset-y: 1.5px * root.ui_scale;
+
+        // 1. Center Group (Folder, Insert) - The Anchor
+        // Center the SAVE button (88px) at the window's center line.
+        // Total width: 88 (Folder) + 90 (Insert) + 4 (Spacing) = 182px
+        // Folder center is at 44px. So layout starts at W/2 - 44px.
+        center_actions := HorizontalLayout {
+            width: 182px * root.ui_scale;
+            x: (parent.width / 2) - (44px * root.ui_scale);
+            height: 100%;
+            padding-top: (root.topbar-height - 24px * root.ui_scale) / 2;
+            spacing: 4px * root.ui_scale;
+
+            // Save Button
+            Rectangle {
+                width: 88px * root.ui_scale;
+                height: 24px * root.ui_scale;
+                background: root.save-button-enabled ? (touch-save-top.has-hover ? ThemeTokens.accent-hover : ThemeTokens.accent) : ThemeTokens.button-disabled-bg;
+                border-radius: 2px * root.ui_scale;
+                opacity: root.save_mode_active ? 0.55 : 1.0;
+                animate background { duration: 250ms; }
+                animate opacity { duration: 220ms; easing: ease-in-out; }
+                Text {
+                    width: 100%;
+                    height: 100%;
+                    text: "SAVE";
+                    color: root.save-button-enabled ? ThemeTokens.text-on-accent : ThemeTokens.text-disabled;
+                    font-size: 12px * root.ui_scale;
+                    font-weight: ThemeTokens.font-weight-bold;
+                    horizontal-alignment: center;
+                    vertical-alignment: center;
+                }
+
+                touch-save-top := TouchArea {
+                    enabled: root.save-button-enabled;
+                    clicked => {
+                        root.preset_picker_open = false;
+                        root.begin_save_preset();
+                    }
+                }
+            }
+
+            // Insert Button
+            Rectangle {
+                width: 90px * root.ui_scale;
+                height: 24px * root.ui_scale;
+                background: (root.preset_insert_enabled && !root.save_mode_active) ? (touch-insert.has-hover ? ThemeTokens.accent-hover : ThemeTokens.accent) : ThemeTokens.button-disabled-bg;
+                border-radius: 2px * root.ui_scale;
+                animate background { duration: 250ms; }
+                Text {
+                    width: 100%;
+                    height: 100%;
+                    text: "INSERT";
+                    color: (root.preset_insert_enabled && !root.save_mode_active) ? ThemeTokens.text-on-accent : ThemeTokens.text-disabled;
+                    font-size: 12px * root.ui_scale;
+                    font-weight: ThemeTokens.font-weight-bold;
+                    horizontal-alignment: center;
+                    vertical-alignment: center;
+                }
+
+                touch-insert := TouchArea {
+                    enabled: root.preset_insert_enabled && !root.save_mode_active;
+                    clicked => {
+                        root.preset_picker_open = false;
+                        root.insert_selected_preset();
+                    }
+                }
+            }
+        }
+
+        // 2. Left Group (Brand, Slots) - Anchored to Center Left
+        HorizontalLayout {
+            x: root.topbar-side-margin;
+            width: center_actions.x - self.x - 8px * root.ui_scale; // Added gap before center
+            height: 100%;
+            padding-top: (root.topbar-height - 24px * root.ui_scale) / 2;
+            spacing: 12px * root.ui_scale;
+
+            // Brand Area
+            HorizontalLayout {
+                spacing: 6px * root.ui_scale;
+                Rectangle {
+                    width: title_text.preferred-width;
+                    height: 100%;
+                    title_text := Text {
+                        text: "IRMax";
+                        color: ThemeTokens.text-dark;
+                        font-size: 26px * root.ui_scale;
+                        font-family: "Arial";
+                        font-weight: 700;
+                        y: (parent.height - self.preferred-height) / 2 - 3px * root.ui_scale; // Centered and nudged UP
+                    }
+                }
+
+                Rectangle {
+                    width: sub_title.preferred-width;
+                    height: 100%;
+                    sub_title := Text {
+                        text: "REAL-TIME GPU Conv ENGINE";
+                        color: ThemeTokens.text-light;
+                        font-size: 11px * root.ui_scale;
+                        font-weight: ThemeTokens.font-weight-medium;
+                        y: (parent.height - self.preferred-height) / 2 + 2.5px * root.ui_scale; // Reduced offset (6->4) to move UP
+                    }
+                }
+            }
+
+            Rectangle {
+                horizontal-stretch: 1;
+            } // Push Brand left and Slots right
+
+            // Slot Buttons
+            HorizontalLayout {
+                spacing: 4px * root.ui_scale; // Gap between buttons
+                SlotButton {
+                    uiscale: root.ui_scale;
+                    label: "1";
+                    active: root.active_slot == 0;
+                    occupied: root.slot1_occupied;
+                    clicked => {
+                        root.preset_picker_open = false;
+                        root.select_slot(0);
+                    }
+                    secondary_clicked => {
+                        root.preset_picker_open = false;
+                        root.clear_slot(0);
+                    }
+                }
+
+                SlotButton {
+                    uiscale: root.ui_scale;
+                    label: "2";
+                    active: root.active_slot == 1;
+                    occupied: root.slot2_occupied;
+                    clicked => {
+                        root.preset_picker_open = false;
+                        root.select_slot(1);
+                    }
+                    secondary_clicked => {
+                        root.preset_picker_open = false;
+                        root.clear_slot(1);
+                    }
+                }
+
+                SlotButton {
+                    uiscale: root.ui_scale;
+                    label: "3";
+                    active: root.active_slot == 2;
+                    occupied: root.slot3_occupied;
+                    clicked => {
+                        root.preset_picker_open = false;
+                        root.select_slot(2);
+                    }
+                    secondary_clicked => {
+                        root.preset_picker_open = false;
+                        root.clear_slot(2);
+                    }
+                }
+
+                SlotButton {
+                    uiscale: root.ui_scale;
+                    label: "4";
+                    active: root.active_slot == 3;
+                    occupied: root.slot4_occupied;
+                    clicked => {
+                        root.preset_picker_open = false;
+                        root.select_slot(3);
+                    }
+                    secondary_clicked => {
+                        root.preset_picker_open = false;
+                        root.clear_slot(3);
+                    }
+                }
+
+                SlotButton {
+                    uiscale: root.ui_scale;
+                    label: "5";
+                    active: root.active_slot == 4;
+                    occupied: root.slot5_occupied;
+                    clicked => {
+                        root.preset_picker_open = false;
+                        root.select_slot(4);
+                    }
+                    secondary_clicked => {
+                        root.preset_picker_open = false;
+                        root.clear_slot(4);
+                    }
+                }
+            }
+        }
+
+        // 3. Right Group (Preset, Settings) - Anchored to Center Right
+        HorizontalLayout {
+            x: center_actions.x + center_actions.width + 8px * root.ui_scale;
+            width: parent.width - self.x - root.topbar-side-margin;
+            height: 100%;
+            padding-top: (root.topbar-height - 24px * root.ui_scale) / 2;
+            spacing: 8px * root.ui_scale;
+
+            // True Stereo Dropdown
+            Rectangle {
+                width: 220px * root.ui_scale;
+                height: 24px * root.ui_scale;
+                background: touch-preset.has-hover ? ThemeTokens.surface-hover : ThemeTokens.surface-plain;
+                border-width: 1px * root.ui_scale;
+                border-color: touch-preset.has-hover ? ThemeTokens.border-dark : ThemeTokens.border-medium;
+                border-radius: 2px * root.ui_scale;
+                animate background { duration: 250ms; }
+                animate border-color { duration: 250ms; }
+                HorizontalLayout {
+                    padding-left: 8px * root.ui_scale;
+                    padding-right: 8px * root.ui_scale;
+                    Text {
+                        text: root.selected_preset_label;
+                        color: ThemeTokens.text-dark;
+                        font-size: 12px * root.ui_scale;
+                        font-weight: ThemeTokens.font-weight-medium;
+                        vertical-alignment: center;
+                        horizontal-stretch: 1;
+                    }
+
+                    Rectangle {
+                        width: 8px * root.ui_scale;
+                        height: 6px * root.ui_scale;
+                        y: 9px * root.ui_scale;
+                        background: ThemeTokens.text-dark;
+                        border-radius: 1px * root.ui_scale;
+                    }
+                }
+
+                touch-preset := TouchArea {
+                    clicked => {
+                        if (root.preset_picker_open) {
+                            root.preset_picker_open = false;
+                        } else {
+                            root.request_preset_leaf_items();
+                            root.preset_picker_open = true;
+                        }
+                    }
+                }
+
+                Rectangle {
+                    property <float> picker-panel-opacity: root.preset_picker_open ? 1.0 : 0.0;
+                    x: root.preset_picker_open || self.opacity > 0.01 ? (parent.width - self.width) : (parent.width + 10000px * root.ui_scale);
+                    y: parent.height + 2px * root.ui_scale;
+                    width: Math.max(
+                        root.preset-picker-column-width,
+                        root.preset_menu_column_count * root.preset-picker-column-width);
+                    height: Math.max(
+                        1px * root.ui_scale,
+                        Math.min(
+                            root.preset_menu_max_rows * root.preset-picker-row-height,
+                            root.preset-picker-max-height));
+                    background: #00000000;
+                    border-width: 0px * root.ui_scale;
+                    z: 70;
+                    opacity: picker-panel-opacity;
+                    animate opacity {
+                        duration: 180ms;
+                        easing: ease-in-out;
+                    }
+
+                    for _[col] in root.preset-menu-max-columns: col-panel := Rectangle {
+                        property <int> depth-index: col;
+                        property <bool> column-has-rows: root.preset_menu_column_rows.length > depth-index ? root.preset_menu_column_rows[depth-index] > 0 : false;
+                        property <bool> column-active: depth-index < root.preset_menu_column_count && column-has-rows;
+                        property <float> column-opacity: (root.preset_picker_open && column-active) ? 1.0 : 0.0;
+                        x: column-active || self.opacity > 0.01 ? (parent.width - ((depth-index + 1) * root.preset-picker-column-width)) : (parent.width + 10000px * root.ui_scale);
+                        y: 0px * root.ui_scale;
+                        width: root.preset-picker-column-width;
+                        height: parent.height;
+                        background: ThemeTokens.picker-bg;
+                        border-width: 1px * root.ui_scale;
+                        border-color: ThemeTokens.border-medium;
+                        border-radius: 4px * root.ui_scale;
+                        drop-shadow-blur: 18px * root.ui_scale;
+                        drop-shadow-color: ThemeTokens.shadow-medium;
+                        drop-shadow-offset-y: 4px * root.ui_scale;
+                        clip: true;
+                        opacity: column-opacity;
+                        animate opacity {
+                            duration: 150ms;
+                            easing: ease-in-out;
+                        }
+
+                        for preset[i] in root.preset_leaf_items: Rectangle {
+                            property <int> item-depth: root.preset_menu_entry_depths.length > i ? root.preset_menu_entry_depths[i] : 0;
+                            property <int> item-row: root.preset_menu_entry_rows.length > i ? root.preset_menu_entry_rows[i] : 0;
+                            property <int> selected-row: root.preset_menu_selected_rows.length > col-panel.depth-index ? root.preset_menu_selected_rows[col-panel.depth-index] : -1;
+                            property <bool> item-active: item-depth == col-panel.depth-index;
+                            property <int> item-key: ((item-depth + 1) * 10000) + item-row + 1;
+
+                            x: 0px * root.ui_scale;
+                            y: item-row * root.preset-picker-row-height;
+                            width: parent.width;
+                            height: root.preset-picker-row-height;
+                            visible: item-active;
+                            background: item-row == selected-row ? ThemeTokens.picker-row-selected : (touch-item.has-hover ? ThemeTokens.picker-row-hover : #00000000);
+                            animate background { duration: 180ms; }
+
+                            Rectangle {
+                                x: 0px * root.ui_scale;
+                                y: 5px * root.ui_scale;
+                                width: item-row == selected-row || touch-item.has-hover ? 3px * root.ui_scale : 0px * root.ui_scale;
+                                height: parent.height - 10px * root.ui_scale;
+                                border-radius: 2px * root.ui_scale;
+                                background: ThemeTokens.picker-row-indicator;
+                                animate width {
+                                    duration: 140ms;
+                                    easing: ease-out;
+                                }
+                            }
+
+                            Text {
+                                x: touch-item.has-hover ? 14px * root.ui_scale : 10px * root.ui_scale;
+                                width: parent.width - 24px * root.ui_scale;
+                                height: parent.height;
+                                text: preset;
+                                color: touch-item.has-hover || item-row == selected-row ? ThemeTokens.text-dark : ThemeTokens.text-medium;
+                                font-size: 11px * root.ui_scale;
+                                font-weight: ThemeTokens.font-weight-medium;
+                                vertical-alignment: center;
+                                animate x {
+                                    duration: 130ms;
+                                    easing: ease-out;
+                                }
+                                animate color { duration: 130ms; }
+                            }
+
+                            touch-item := TouchArea {
+                                enabled: root.preset_picker_open && col-panel.column-active && item-active;
+                                clicked => {
+                                    root.choose_preset_leaf(item-key);
+                                }
+                            }
+
+                            property <bool> item-hovered: touch-item.has-hover;
+                            changed item-hovered => {
+                                if (item-hovered) {
+                                    root.hover_preset_leaf(item-key);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            Rectangle {
+                horizontal-stretch: 1;
+            } // Push Preset left and Settings right
+
+            Rectangle {
+                width: 24px * root.ui_scale;
+                height: 24px * root.ui_scale;
+                background: transparent;
+
+                Text {
+                    width: 100%;
+                    height: 100%;
+                    x: 0px;
+                    y: 1px * root.ui_scale;
+                    text: root.dark_mode_enabled ? "☾" : "☀";
+                    color: touch-theme.has-hover ? ThemeTokens.accent : ThemeTokens.text-medium;
+                    font-size: (touch-theme.has-hover ? 17px : 16px) * root.ui_scale;
+                    horizontal-alignment: center;
+                    vertical-alignment: center;
+                    animate color { duration: 250ms; }
+                    animate font-size {
+                        duration: 250ms;
+                        easing: ease-out;
+                    }
+                }
+
+                touch-theme := TouchArea {
+                    clicked => {
+                        root.preset_picker_open = false;
+                        root.toggle_theme_mode();
+                    }
+                }
+            }
+
+            // Settings Gear Button
+            Rectangle {
+                width: 24px * root.ui_scale;
+                height: 24px * root.ui_scale;
+                background: transparent;
+                Text {
+                    width: 100%;
+                    height: 100%;
+                    x: 0px;
+                    y: 1px * root.ui_scale;
+                    text: "⚙";
+                    // Using accent color and size scaling for stronger feedback
+                    color: touch-settings.has-hover ? ThemeTokens.accent : ThemeTokens.text-medium;
+                    font-size: (touch-settings.has-hover ? 17px : 16px) * root.ui_scale;
+                    horizontal-alignment: center;
+                    vertical-alignment: center;
+                    animate color { duration: 250ms; }
+                    animate font-size {
+                        duration: 250ms;
+                        easing: ease-out;
+                    }
+                }
+
+                touch-settings := TouchArea {
+                    clicked => {
+                        root.preset_picker_open = false;
+                        if (!root.settings_open) {
+                            root.settings_guard_draft_value = root.guard_profile_value < -2 ? -2 : (root.guard_profile_value > 1 ? 1 : root.guard_profile_value);
+                        }
+                        root.settings_open = !root.settings_open;
+                    }
+                }
+            }
+        }
+    }
+
+    if root.preset_picker_open: Rectangle {
+        x: 0px * root.ui_scale;
+        y: root.topbar-height;
+        width: root.width;
+        height: root.height - root.topbar-height;
+        // Must stay below the topbar (z=10), otherwise it will swallow
+        // picker item events because the picker panel is a child of topbar.
+        z: 9;
+        background: #00000000;
+        touch-preset-outside := TouchArea {
+            clicked => {
+                root.preset_picker_open = false;
+            }
+        }
+    }
+
+    // Disabled outside-click overlay for preset picker.
+    // It could swallow menu item clicks and close the picker immediately.
+    Rectangle {
+        x: 0px * root.ui_scale;
+        y: root.topbar-height;
+        width: root.left-panel-width;
+        height: parent.height - root.topbar-height - root.footer-height;
+        background: ThemeTokens.bg-sidebar;
+        border-width: 0px * root.ui_scale; // Remove all borders (Right border is separate Rect)
+        // border-color: ThemeTokens.border-light; // Not needed
+        z: 5; // Raise sidebar to cast shadow over content
+        drop-shadow-blur: 8px * root.ui_scale;
+        drop-shadow-color: ThemeTokens.shadow-soft;
+        drop-shadow-offset-x: 1px * root.ui_scale; // Shadow to the right
+
+        Rectangle {
+            x: (parent.width - 108px * root.ui_scale) / 2;
+            y: 16px * root.ui_scale;
+            width: 108px * root.ui_scale;
+            height: 24px * root.ui_scale;
+            border-width: 1px * root.ui_scale;
+            border-color: touch-cuda.has-hover ? ThemeTokens.border-dark : ThemeTokens.border-medium;
+            border-radius: 2px * root.ui_scale;
+            background: root.backend_switch_enabled ? (touch-cuda.has-hover ? ThemeTokens.surface-hover : ThemeTokens.surface-plain) : ThemeTokens.surface-active;
+            animate background { duration: 250ms; }
+            animate border-color { duration: 250ms; }
+            Text {
+                width: parent.width;
+                height: parent.height;
+                text: root.backend_label;
+                color: root.backend_switch_enabled ? ThemeTokens.text-medium : ThemeTokens.text-light;
+                font-size: 12px * root.ui_scale;
+                font-weight: ThemeTokens.font-weight-bold;
+                horizontal-alignment: center;
+                vertical-alignment: center;
+            }
+
+            touch-cuda := TouchArea {
+                enabled: root.backend_switch_enabled && !root.backend_switch_pending;
+                clicked => {
+                    root.switch_backend();
+                }
+            }
+        }
+
+        TechKnob {
+            uiscale: root.ui_scale;
+            x: (parent.width - self.width) / 2;
+            y: 74px * root.ui_scale;
+            label: "DRY/WET";
+            value: root.mix_text;
+            show_slider: true;
+            slider_value <=> root.mix_value;
+            slider_default_value: 1.0;
+            slider_start_change => {
+                root.mix_start_change();
+            }
+            slider_changed(next) => {
+                root.mix_text = "\{Math.round(next * 100)}%";
+                root.mix_changed(next);
+            }
+            slider_end_change => {
+                root.mix_end_change();
+            }
+        }
+
+        TechKnob {
+            uiscale: root.ui_scale;
+            x: (parent.width - self.width) / 2;
+            y: 240px * root.ui_scale;
+            label: "OUTPUT";
+            value: root.output_text;
+            show_slider: true;
+            slider_value <=> root.output_value;
+            slider_default_value: 0.6666667;
+            slider_start_change => {
+                root.output_start_change();
+            }
+            slider_changed(next) => {
+                let db = next <= 0.6666667 ? -100 + (next / 0.6666667) * 100 : ((next - 0.6666667) / (1 - 0.6666667)) * 6;
+                if (db <= -99.9) {
+                    root.output_text = "-inf";
+                } else {
+                    let rounded = Math.round(db * 10) / 10;
+                    let display = (rounded < 0.05 && rounded > -0.05) ? 0.0 : rounded;
+                    if (display > -0.01 && display < 0.01) {
+                        root.output_text = "0.0";
+                    } else if (display > 0) {
+                        root.output_text = "+\{display}";
+                    } else {
+                        root.output_text = "\{display}";
+                    }
+                }
+                root.output_changed(next);
+            }
+            slider_end_change => {
+                root.output_end_change();
+            }
+        }
+
+        Rectangle {
+            x: parent.width - 1px * root.ui_scale;
+            y: 0px * root.ui_scale;
+            width: 1px * root.ui_scale;
+            height: parent.height;
+            background: ThemeTokens.border-light;
+        }
+    }
+
+    Rectangle {
+        x: root.left-panel-width;
+        y: root.topbar-height;
+        width: parent.width - root.left-panel-width;
+        height: parent.height - root.topbar-height - root.footer-height;
+        z: 0;
+        background: ThemeTokens.bg-grid;
+        border-width: 0px * root.ui_scale;
+
+        // Grid Lines
+        Rectangle {
+            width: parent.width;
+            height: parent.height;
+            for _[i] in 32: Rectangle {
+                x: i * (parent.width / 32);
+                width: 1px * root.ui_scale;
+                height: parent.height;
+                background: ThemeTokens.border-light;
+                opacity: 0.5;
+            }
+        }
+
+        Rectangle {
+            width: parent.width;
+            height: parent.height;
+            for _[i] in 32: Rectangle {
+                y: i * (parent.height / 32);
+                width: parent.width;
+                height: 1px * root.ui_scale;
+                background: ThemeTokens.border-light;
+                opacity: 0.5;
+            }
+        }
+
+        Rectangle {
+            x: 0px * root.ui_scale;
+            y: 0px * root.ui_scale;
+            width: root.main-padding;
+            height: parent.height;
+            z: 31;
+            visible: root.save_mode_active || self.opacity > 0.01;
+            background: ThemeTokens.overlay-strong;
+            opacity: root.save_mode_active ? 1.0 : 0.0;
+            animate opacity {
+                duration: 220ms;
+                easing: ease-in-out;
+            }
+
+            touch-save-right-left-margin := TouchArea {
+                enabled: root.save_mode_active;
+                clicked => {
+                    root.cancel_save_preset();
+                }
+            }
+        }
+
+        Rectangle {
+            x: parent.width - root.main-padding;
+            y: 0px * root.ui_scale;
+            width: root.main-padding;
+            height: parent.height;
+            z: 31;
+            visible: root.save_mode_active || self.opacity > 0.01;
+            background: ThemeTokens.overlay-strong;
+            opacity: root.save_mode_active ? 1.0 : 0.0;
+            animate opacity {
+                duration: 220ms;
+                easing: ease-in-out;
+            }
+
+            touch-save-right-right-margin := TouchArea {
+                enabled: root.save_mode_active;
+                clicked => {
+                    root.cancel_save_preset();
+                }
+            }
+        }
+
+        Rectangle {
+            x: root.main-padding;
+            y: 0px * root.ui_scale;
+            width: parent.width - root.main-padding * 2;
+            height: root.main-padding;
+            z: 31;
+            visible: root.save_mode_active || self.opacity > 0.01;
+            background: ThemeTokens.overlay-strong;
+            opacity: root.save_mode_active ? 1.0 : 0.0;
+            animate opacity {
+                duration: 220ms;
+                easing: ease-in-out;
+            }
+
+            touch-save-right-top-margin := TouchArea {
+                enabled: root.save_mode_active;
+                clicked => {
+                    root.cancel_save_preset();
+                }
+            }
+        }
+
+        Rectangle {
+            x: root.main-padding;
+            y: parent.height - root.main-padding;
+            width: parent.width - root.main-padding * 2;
+            height: root.main-padding;
+            z: 31;
+            visible: root.save_mode_active || self.opacity > 0.01;
+            background: ThemeTokens.overlay-strong;
+            opacity: root.save_mode_active ? 1.0 : 0.0;
+            animate opacity {
+                duration: 220ms;
+                easing: ease-in-out;
+            }
+
+            touch-save-right-bottom-margin := TouchArea {
+                enabled: root.save_mode_active;
+                clicked => {
+                    root.cancel_save_preset();
+                }
+            }
+        }
+
+        Rectangle {
+            x: root.main-padding;
+            y: root.main-padding;
+            width: parent.width - root.main-padding * 2;
+            height: parent.height - root.main-padding * 2;
+            background: #00000000;
+            Rectangle {
+                x: (parent.width - self.width) / 2;
+                y: (parent.height - 56px * root.ui_scale - self.height) / 2;
+                width: root.spectrum-panel-active ? parent.width : 300px * root.ui_scale;
+                height: root.spectrum-panel-active ? (parent.height - 56px * root.ui_scale) : 160px * root.ui_scale;
+                background: #00000000;
+                border-width: root.spectrum-visual-opacity > 0.0 ? (1px * root.ui_scale) : 0px * root.ui_scale;
+                border-color: root.spectrum-visual-opacity > 0.0 ? ThemeTokens.border-dark-panel : #00000000;
+                border-radius: 5px * root.ui_scale;
+                clip: true;
+                drop-shadow-blur: root.spectrum-visual-opacity > 0.0 ? 12px * root.ui_scale : 0px * root.ui_scale;
+                drop-shadow-color: root.spectrum-visual-opacity > 0.0 ? ThemeTokens.shadow-light : #00000000;
+                drop-shadow-offset-y: root.spectrum-visual-opacity > 0.0 ? 4px * root.ui_scale : 0px * root.ui_scale;
+                animate background { duration: 260ms; }
+                animate border-color { duration: 260ms; }
+                animate drop-shadow-color { duration: 250ms; }
+                animate drop-shadow-blur { duration: 250ms; }
+                animate drop-shadow-offset-y { duration: 250ms; }
+                Rectangle {
+                    x: parent.width / 2 - 0.5px * root.ui_scale;
+                    y: 0px * root.ui_scale;
+                    width: 1px * root.ui_scale;
+                    height: parent.height;
+                    background: ThemeTokens.matrix-line;
+                    opacity: 0;
+                }
+
+                Rectangle {
+                    x: 0px * root.ui_scale;
+                    y: parent.height / 2 - 0.5px * root.ui_scale;
+                    width: parent.width;
+                    height: 1px * root.ui_scale;
+                    background: ThemeTokens.matrix-line;
+                    opacity: 0;
+                }
+
+                Rectangle {
+                    x: 0px * root.ui_scale;
+                    y: 0px * root.ui_scale;
+                    width: parent.width;
+                    height: parent.height;
+                    background: #00000000;
+                    opacity: 1.0;
+
+                    Rectangle {
+                        x: 0px * root.ui_scale;
+                        y: 0px * root.ui_scale;
+                        width: parent.width;
+                        height: parent.height;
+                        background: ThemeTokens.bg-dark-panel;
+                        opacity: root.spectrum-visual-opacity;
+                        animate opacity {
+                            duration: 460ms;
+                            easing: ease-in-out;
+                        }
+                    }
+                    Image {
+                        width: parent.width;
+                        height: parent.height;
+                        source: root.spectrum_image;
+                        image-fit: fill;
+                        opacity: root.spectrum-visual-opacity;
+                        animate opacity {
+                            duration: 460ms;
+                            easing: ease-in-out;
+                        }
+                    }
+
+                    property <int> rows-safe: root.spectrum_rows <= 0 ? 1 : root.spectrum_rows;
+                    property <int> cols-safe: root.spectrum_cols <= 0 ? 1 : root.spectrum_cols;
+                    for row in rows-safe: Rectangle {
+                        if row < rows-safe - 1: Rectangle {
+                            x: 0px * root.ui_scale;
+                            y: (row + 1) * parent.height / rows-safe;
+                            width: parent.width;
+                            height: 1px * root.ui_scale;
+                            background: ThemeTokens.matrix-line;
+                            opacity: root.spectrum-visual-opacity * 0.58;
+                            animate opacity {
+                                duration: 460ms;
+                                easing: ease-in-out;
+                            }
+                        }
+                    }
+                    for col in cols-safe: Rectangle {
+                        if col < cols-safe - 1: Rectangle {
+                            x: (col + 1) * parent.width / cols-safe;
+                            y: 0px * root.ui_scale;
+                            width: 1px * root.ui_scale;
+                            height: parent.height;
+                            background: ThemeTokens.matrix-line;
+                            opacity: root.spectrum-visual-opacity * 0.58;
+                            animate opacity {
+                                duration: 460ms;
+                                easing: ease-in-out;
+                            }
+                        }
+                    }
+                    for label[label_index] in root.spectrum_row_labels: Text {
+                        x: 0px * root.ui_scale;
+                        y: label_index * (parent.height / rows-safe) + 2px * root.ui_scale;
+                        width: parent.width - 4px * root.ui_scale;
+                        text: label;
+                        color: ThemeTokens.matrix-label;
+                        opacity: root.spectrum-visual-opacity;
+                        font-size: 10px * root.ui_scale;
+                        horizontal-alignment: right;
+                        animate opacity {
+                            duration: 460ms;
+                            easing: ease-in-out;
+                        }
+                    }
+                    Rectangle {
+                        x: 0px * root.ui_scale;
+                        y: 0px * root.ui_scale;
+                        width: parent.width;
+                        height: parent.height;
+                        background: #00000000; // Transparent background to show grid during loading
+                        opacity: root.spectrum_loading ? 1.0 : 0.0;
+                        animate opacity {
+                            duration: 220ms;
+                            easing: ease-in-out;
+                        }
+                        Rectangle {
+                            width: Math.min(parent.width - 44px * root.ui_scale, 420px * root.ui_scale);
+                            height: 126px * root.ui_scale;
+                            x: (parent.width - self.width) / 2;
+                            y: (parent.height - self.height) / 2;
+                            background: ThemeTokens.bg-main;
+                            border-width: 1px * root.ui_scale;
+                            border-color: ThemeTokens.border-light;
+                            border-radius: 5px * root.ui_scale;
+                            drop-shadow-blur: 14px * root.ui_scale;
+                            drop-shadow-color: ThemeTokens.shadow-soft;
+                            drop-shadow-offset-y: 4px * root.ui_scale;
+                            VerticalLayout {
+                                width: parent.width;
+                                height: parent.height;
+                                padding-left: 18px * root.ui_scale;
+                                padding-right: 18px * root.ui_scale;
+                                padding-top: 14px * root.ui_scale;
+                                padding-bottom: 12px * root.ui_scale;
+                                spacing: 7px * root.ui_scale;
+                                HorizontalLayout {
+                                    height: 14px * root.ui_scale;
+                                    spacing: 6px * root.ui_scale;
+                                    alignment: center;
+                                    Rectangle {
+                                        width: 7px * root.ui_scale;
+                                        height: 7px * root.ui_scale;
+                                        border-radius: 3.5px * root.ui_scale;
+                                        background: ThemeTokens.accent;
+                                        opacity: root.loading_pulse_step == 0 ? 1.0 : 0.28;
+                                        animate opacity {
+                                            duration: 180ms;
+                                            easing: ease-in-out;
+                                        }
+                                    }
+
+                                    Rectangle {
+                                        width: 7px * root.ui_scale;
+                                        height: 7px * root.ui_scale;
+                                        border-radius: 3.5px * root.ui_scale;
+                                        background: ThemeTokens.accent;
+                                        opacity: root.loading_pulse_step == 1 ? 1.0 : 0.28;
+                                        animate opacity {
+                                            duration: 180ms;
+                                            easing: ease-in-out;
+                                        }
+                                    }
+
+                                    Rectangle {
+                                        width: 7px * root.ui_scale;
+                                        height: 7px * root.ui_scale;
+                                        border-radius: 3.5px * root.ui_scale;
+                                        background: ThemeTokens.accent;
+                                        opacity: root.loading_pulse_step == 2 ? 1.0 : 0.28;
+                                        animate opacity {
+                                            duration: 180ms;
+                                            easing: ease-in-out;
+                                        }
+                                    }
+                                }
+
+                                Text {
+                                    text: "LOADING IR MATRIX";
+                                    color: ThemeTokens.text-dark;
+                                    font-size: 14px * root.ui_scale;
+                                    font-weight: ThemeTokens.font-weight-bold;
+                                    horizontal-alignment: center;
+                                }
+
+                                Text {
+                                    text: root.spectrum_status_text == "" ? "Preparing selected slot..." : root.spectrum_status_text;
+                                    color: ThemeTokens.text-medium;
+                                    font-size: 10px * root.ui_scale;
+                                    font-weight: ThemeTokens.font-weight-medium;
+                                    horizontal-alignment: center;
+                                    vertical-alignment: center;
+                                    wrap: word-wrap;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Empty state overlay moved out of the fading container to remain visible when inactive
+                Rectangle {
+                    x: 0px * root.ui_scale;
+                    y: 0px * root.ui_scale;
+                    width: parent.width;
+                    height: parent.height;
+                    background: #00000000;
+                    opacity: !root.spectrum_loading && !root.spectrum_has_data ? 1.0 : 0.0;
+                    animate opacity {
+                        duration: 220ms;
+                        easing: ease-in-out;
+                    }
+                    Rectangle {
+                        width: Math.min(parent.width - 28px * root.ui_scale, 300px * root.ui_scale);
+                        height: 160px * root.ui_scale;
+                        x: (parent.width - self.width) / 2;
+                        y: (parent.height - self.height) / 2;
+                        background: touch-empty.has-hover ? ThemeTokens.input-bg-hover : ThemeTokens.bg-main;
+                        border-width: 1px * root.ui_scale;
+                        border-color: touch-empty.has-hover ? ThemeTokens.border-medium : ThemeTokens.border-light;
+                        border-radius: 5px * root.ui_scale;
+                        drop-shadow-blur: touch-empty.has-hover ? 18px * root.ui_scale : 14px * root.ui_scale;
+                        drop-shadow-color: touch-empty.has-hover ? ThemeTokens.shadow-soft : ThemeTokens.shadow-light;
+                        drop-shadow-offset-y: touch-empty.has-hover ? 5px * root.ui_scale : 4px * root.ui_scale;
+                        animate background { duration: 220ms; }
+                        animate border-color { duration: 220ms; }
+                        animate drop-shadow-blur { duration: 220ms; }
+                        animate drop-shadow-color { duration: 220ms; }
+
+                        VerticalLayout {
+                            width: parent.width;
+                            height: parent.height;
+                            padding-left: 14px * root.ui_scale;
+                            padding-right: 14px * root.ui_scale;
+                            padding-top: 26px * root.ui_scale;
+                            padding-bottom: 24px * root.ui_scale;
+                            spacing: 6px * root.ui_scale;
+                            alignment: center;
+                            Text {
+                                text: "IMPULSE RESPONSE EMPTY";
+                                color: touch-empty.has-hover ? ThemeTokens.text-medium : ThemeTokens.text-light;
+                                animate color { duration: 250ms; }
+                                font-size: 14px * root.ui_scale;
+                                font-weight: ThemeTokens.font-weight-bold;
+                                horizontal-alignment: center;
+                            }
+
+                            Text {
+                                text: "Click to load an IR folder";
+                                color: touch-empty.has-hover ? ThemeTokens.text-medium : ThemeTokens.text-light;
+                                animate color { duration: 250ms; }
+                                font-size: 10px * root.ui_scale;
+                                font-weight: ThemeTokens.font-weight-medium;
+                                horizontal-alignment: center;
+                            }
+                        }
+
+                        touch-empty-card := TouchArea {
+                            enabled: !root.spectrum_has_data && !root.spectrum_loading;
+                            width: 100%;
+                            height: 100%;
+                            mouse-cursor: pointer;
+                            clicked => {
+                                root.load_ir_folder();
+                            }
+                        }
+                    }
+                }
+
+                touch-empty := TouchArea {
+                    enabled: !root.spectrum_has_data && !root.spectrum_loading;
+                    width: 100%;
+                    height: 100%;
+                    mouse-cursor: pointer;
+                    clicked => {
+                        root.load_ir_folder();
+                    }
+                }
+            }
+
+            Rectangle {
+                x: 0px * root.ui_scale;
+                y: 0px * root.ui_scale;
+                width: parent.width;
+                height: parent.height;
+                z: 30;
+                visible: root.save_mode_active || self.opacity > 0.01;
+                background: ThemeTokens.overlay-strong;
+                opacity: root.save_mode_active ? 1.0 : 0.0;
+                animate opacity {
+                    duration: 220ms;
+                    easing: ease-in-out;
+                }
+
+                touch-save-panel-mask := TouchArea {
+                    enabled: root.save_mode_active;
+                    clicked => {
+                        root.cancel_save_preset();
+                    }
+                }
+            }
+
+            Rectangle {
+                x: 0px * root.ui_scale;
+                y: parent.height - 36px * root.ui_scale;
+                width: 80px * root.ui_scale;
+                height: 36px * root.ui_scale;
+                z: 15;
+                background: touch-ch.has-hover ? ThemeTokens.surface-active-hover : ThemeTokens.surface-active; // Stronger hover light
+                border-width: 1px * root.ui_scale;
+                border-color: touch-ch.has-hover ? ThemeTokens.border-medium : ThemeTokens.border-light;
+                border-radius: 2px * root.ui_scale;
+                drop-shadow-blur: touch-ch.has-hover ? 8px * root.ui_scale : 4px * root.ui_scale;
+                drop-shadow-color: touch-ch.has-hover ? ThemeTokens.shadow-soft : ThemeTokens.shadow-light;
+                drop-shadow-offset-y: 2px * root.ui_scale;
+                animate background { duration: 250ms; }
+                animate border-color { duration: 250ms; }
+                animate drop-shadow-blur { duration: 250ms; }
+                animate drop-shadow-color { duration: 250ms; }
+                Text {
+                    width: 100%;
+                    height: 100%;
+                    text: root.channel_text;
+                    color: ThemeTokens.text-medium;
+                    font-size: 12px * root.ui_scale;
+                    font-weight: ThemeTokens.font-weight-bold;
+                    horizontal-alignment: center;
+                    vertical-alignment: center;
+                }
+
+                touch-ch := TouchArea {
+                    width: 100%;
+                    height: 100%;
+                } // Visual feedback only or can be bound if needed
+            }
+
+            Rectangle {
+                x: 86px * root.ui_scale; // 6px * root.ui_scale gap after label
+                y: parent.height - 36px * root.ui_scale;
+                width: parent.width - 114px * root.ui_scale - 86px * root.ui_scale; // Remaining width (adjusted for gap)
+                height: 36px * root.ui_scale;
+                z: 80;
+                background: root.save_mode_active ? (touch-path.has-hover ? ThemeTokens.input-bg-hover : ThemeTokens.input-bg) : (touch-path.has-hover ? ThemeTokens.input-bg-soft : ThemeTokens.bg-main);
+                border-width: 1px * root.ui_scale;
+                border-color: root.save_mode_active ? (touch-path.has-hover ? ThemeTokens.accent-hover : ThemeTokens.accent) : (touch-path.has-hover ? ThemeTokens.border-medium : ThemeTokens.border-light);
+                border-radius: 2px * root.ui_scale;
+                drop-shadow-blur: touch-path.has-hover ? 8px * root.ui_scale : 4px * root.ui_scale;
+                drop-shadow-color: touch-path.has-hover ? ThemeTokens.shadow-soft : ThemeTokens.shadow-light;
+                drop-shadow-offset-y: 2px * root.ui_scale;
+                animate background { duration: 250ms; }
+                animate border-color { duration: 250ms; }
+                animate drop-shadow-blur { duration: 250ms; }
+                animate drop-shadow-color { duration: 250ms; }
+
+                if root.save_mode_active: Rectangle {
+                    x: 0px;
+                    y: 0px;
+                    width: parent.width;
+                    height: parent.height;
+                    border-width: 1px * root.ui_scale;
+                    border-color: ThemeTokens.input-focus-border;
+                    border-radius: 2px * root.ui_scale;
+                    background: #00000000;
+                }
+
+                save-name-input := TextInput {
+                    x: 12px * root.ui_scale;
+                    y: 0px;
+                    width: parent.width - 24px * root.ui_scale;
+                    height: parent.height;
+                    visible: root.save_mode_active;
+                    enabled: root.save_mode_active;
+                    text <=> root.save_name_text;
+                    color: ThemeTokens.text-dark;
+                    selection-foreground-color: #ffffff;
+                    selection-background-color: ThemeTokens.accent;
+                    font-size: 12px * root.ui_scale;
+                    font-weight: ThemeTokens.font-weight-bold;
+                    vertical-alignment: center;
+                    single-line: true;
+                    accepted() => {
+                        root.confirm_save_preset();
+                    }
+                }
+
+                if !root.save_mode_active: Text {
+                    x: 12px * root.ui_scale;
+                    y: 0px * root.ui_scale;
+                    height: 100%;
+                    text: root.folder_path_text;
+                    color: ThemeTokens.text-light;
+                    font-size: 12px * root.ui_scale;
+                    font-weight: ThemeTokens.font-weight-medium;
+                    vertical-alignment: center;
+                }
+
+                touch-path := TouchArea {
+                    width: 100%;
+                    height: 100%;
+                    enabled: !root.save_mode_active && !root.preset-preview-mode;
+                    clicked => {
+                        root.load_ir_folder();
+                    }
+                }
+            }
+
+            Rectangle {
+                x: parent.width - 108px * root.ui_scale;
+                y: parent.height - 36px * root.ui_scale; // Sync with footer height
+                width: 108px * root.ui_scale;
+                height: 36px * root.ui_scale;
+                z: 80;
+
+                // Outer Stroke (Outline / ???)
+                Rectangle {
+                    width: parent.width + 2px * root.ui_scale;
+                    height: parent.height + 2px * root.ui_scale;
+                    x: -1px * root.ui_scale;
+                    y: -1px * root.ui_scale;
+                    border-width: 1px * root.ui_scale;
+                    border-color: (root.save_mode_active || root.preset-preview-mode) ? (touch-load.has-hover ? ThemeTokens.border-dark : ThemeTokens.border-dark) : (touch-load.has-hover ? ThemeTokens.border-dark : #00000000);
+                    border-radius: 3px * root.ui_scale;
+                    animate border-color { duration: 200ms; }
+                }
+
+                background: touch-load.has-hover ? ThemeTokens.accent-hover : ThemeTokens.accent;
+                border-radius: 2px * root.ui_scale;
+                drop-shadow-blur: touch-load.has-hover ? 8px * root.ui_scale : 4px * root.ui_scale;
+                drop-shadow-color: touch-load.has-hover ? ThemeTokens.shadow-medium : ThemeTokens.shadow-medium;
+                drop-shadow-offset-y: touch-load.has-hover ? 2px * root.ui_scale : 1px * root.ui_scale;
+                animate background { duration: 250ms; }
+                animate drop-shadow-blur { duration: 250ms; }
+                animate drop-shadow-color { duration: 250ms; }
+
+                Text {
+                    width: parent.width;
+                    height: parent.height;
+                    text: root.save_mode_active ? "SAVE" : (root.preset-preview-mode ? "RENAME" : "LOAD FOLDER");
+                    color: ThemeTokens.text-on-accent;
+                    font-size: 12px * root.ui_scale;
+                    font-weight: ThemeTokens.font-weight-bold;
+                    horizontal-alignment: center;
+                    vertical-alignment: center;
+                }
+
+                touch-load := TouchArea {
+                    width: 100%;
+                    height: 100%;
+                    clicked => {
+                        if root.save_mode_active {
+                            root.confirm_save_preset();
+                        } else if root.preset-preview-mode {
+                            root.begin_save_preset();
+                        } else {
+                            root.load_ir_folder();
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    Rectangle {
+        x: 0px * root.ui_scale;
+        y: 0px * root.ui_scale;
+        width: root.width;
+        height: root.topbar-height;
+        z: 40;
+        visible: root.save_mode_active || self.opacity > 0.01;
+        background: ThemeTokens.overlay-medium;
+        opacity: root.save_mode_active ? 1.0 : 0.0;
+        animate opacity {
+            duration: 220ms;
+            easing: ease-in-out;
+        }
+
+        touch-save-top-mask := TouchArea {
+            enabled: root.save_mode_active;
+            clicked => {
+                root.cancel_save_preset();
+            }
+        }
+    }
+
+    Rectangle {
+        x: 0px * root.ui_scale;
+        y: root.topbar-height;
+        width: root.left-panel-width;
+        height: root.height - root.topbar-height - root.footer-height;
+        z: 40;
+        visible: root.save_mode_active || self.opacity > 0.01;
+        background: ThemeTokens.overlay-medium;
+        opacity: root.save_mode_active ? 1.0 : 0.0;
+        animate opacity {
+            duration: 220ms;
+            easing: ease-in-out;
+        }
+
+        touch-save-left-mask := TouchArea {
+            enabled: root.save_mode_active;
+            clicked => {
+                root.cancel_save_preset();
+            }
+        }
+    }
+
+    Rectangle {
+        x: 0px * root.ui_scale;
+        y: root.height - root.footer-height;
+        width: root.width;
+        height: root.footer-height;
+        z: 40;
+        visible: root.save_mode_active || self.opacity > 0.01;
+        background: ThemeTokens.overlay-medium;
+        opacity: root.save_mode_active ? 1.0 : 0.0;
+        animate opacity {
+            duration: 220ms;
+            easing: ease-in-out;
+        }
+
+        touch-save-footer-mask := TouchArea {
+            enabled: root.save_mode_active;
+            clicked => {
+                root.cancel_save_preset();
+            }
+        }
+    }
+
+    changed save_mode_active => {
+        if (save_mode_active) {
+            save-name-input.focus();
+        }
+    }
+
+    changed toast_nonce => {
+        if (toast_nonce > 0 && toast_message != "") {
+            root.toast_visible = true;
+            toast-hide-timer.running = false;
+            toast-hide-timer.running = true;
+        }
+    }
+
+    Rectangle {
+        x: 0px * root.ui_scale;
+        y: parent.height - root.footer-height;
+        z: 10; // Ensure shadow casts over content above
+        width: parent.width;
+        height: root.footer-height;
+        background: ThemeTokens.bg-app;
+        border-width: 1px * root.ui_scale;
+        border-color: ThemeTokens.border-light;
+        drop-shadow-blur: 6px * root.ui_scale;
+        drop-shadow-color: ThemeTokens.shadow-soft;
+        drop-shadow-offset-y: -1px * root.ui_scale; // Upward shadow
+
+        Text {
+            x: 20px * root.ui_scale;
+            height: 100%;
+            text: root.ir_meta_text;
+            color: ThemeTokens.text-light;
+            font-size: 10px * root.ui_scale;
+            font-weight: ThemeTokens.font-weight-medium;
+            vertical-alignment: center;
+        }
+
+        Text {
+            width: 100%;
+            height: 100%;
+            text: root.log_path_label;
+            visible: root.log_path_label != "";
+            color: touch-log.has-hover ? ThemeTokens.text-dark : ThemeTokens.text-light;
+            font-size: 10px * root.ui_scale;
+            font-weight: ThemeTokens.font-weight-medium;
+            horizontal-alignment: center;
+            vertical-alignment: center;
+            animate color { duration: 250ms; }
+            touch-log := TouchArea {
+                clicked => {
+                    root.open_log_file();
+                }
+            }
+        }
+
+        Text {
+            x: parent.width - self.width - 20px * root.ui_scale;
+            height: 100%;
+            text: "v0.8.9-private branch Release";
+            color: ThemeTokens.text-light;
+            font-size: 10px * root.ui_scale;
+            font-weight: ThemeTokens.font-weight-medium;
+            vertical-alignment: center;
+        }
+    }
+
+    // Bottom-right resize handle (delegates to host-side resize negotiation).
+    property <length> resize_hotspot: 24px * root.ui_scale;
+    property <bool> resize_dragging: false;
+    property <length> resize_drag_start_mouse_x: 0px * root.ui_scale;
+    property <length> resize_drag_start_mouse_y: 0px * root.ui_scale;
+    property <length> resize_drag_start_width: 0px * root.ui_scale;
+    property <length> resize_drag_start_height: 0px * root.ui_scale;
+    property <length> resize_drag_start_hotspot: 0px * root.ui_scale;
+    property <float> resize_drag_start_aspect: 1.0;
+    Rectangle {
+        width: 18px * root.ui_scale;
+        height: 18px * root.ui_scale;
+        x: root.width - self.width;
+        y: root.height - self.height;
+        z: 120;
+        background: #00000000;
+        // 6-dot triangle pattern
+        Rectangle {
+            width: 2px * root.ui_scale;
+            height: 2px * root.ui_scale;
+            x: parent.width - 4px * root.ui_scale;
+            y: parent.height - 4px * root.ui_scale;
+                background: ThemeTokens.border-dark;
+        }
+
+        Rectangle {
+            width: 2px * root.ui_scale;
+            height: 2px * root.ui_scale;
+            x: parent.width - 8px * root.ui_scale;
+            y: parent.height - 4px * root.ui_scale;
+                background: ThemeTokens.border-dark;
+        }
+
+        Rectangle {
+            width: 2px * root.ui_scale;
+            height: 2px * root.ui_scale;
+            x: parent.width - 12px * root.ui_scale;
+            y: parent.height - 4px * root.ui_scale;
+                background: ThemeTokens.border-dark;
+        }
+
+        Rectangle {
+            width: 2px * root.ui_scale;
+            height: 2px * root.ui_scale;
+            x: parent.width - 4px * root.ui_scale;
+            y: parent.height - 8px * root.ui_scale;
+                background: ThemeTokens.border-dark;
+        }
+
+        Rectangle {
+            width: 2px * root.ui_scale;
+            height: 2px * root.ui_scale;
+            x: parent.width - 8px * root.ui_scale;
+            y: parent.height - 8px * root.ui_scale;
+            background: ThemeTokens.border-dark;
+        }
+
+        Rectangle {
+            width: 2px * root.ui_scale;
+            height: 2px * root.ui_scale;
+            x: parent.width - 4px * root.ui_scale;
+            y: parent.height - 12px * root.ui_scale;
+            background: ThemeTokens.border-dark;
+        }
+    }
+
+    touch-resize-overlay := TouchArea {
+        x: root.width - root.resize_hotspot;
+        y: root.height - root.resize_hotspot;
+        width: root.resize_hotspot;
+        height: root.resize_hotspot;
+        z: 121;
+        mouse-cursor: se-resize;
+        pointer-event(event) => {
+            if (event.kind == PointerEventKind.down && event.button == PointerEventButton.left) {
+                root.resize_dragging = true;
+                root.resize_drag_start_mouse_x = self.mouse-x;
+                root.resize_drag_start_mouse_y = self.mouse-y;
+                root.resize_drag_start_width = root.width;
+                root.resize_drag_start_height = root.height;
+                root.resize_drag_start_hotspot = root.resize_hotspot;
+                root.resize_drag_start_aspect = (root.width / 1px) / ((root.height / 1px) < 1.0 ? 1.0 : (root.height / 1px));
+            } else if (event.kind == PointerEventKind.up || event.kind == PointerEventKind.cancel) {
+                root.resize_dragging = false;
+            }
+        }
+        moved => {
+            if (self.enabled && self.pressed && root.resize_dragging) {
+                let local_delta_x = self.mouse-x - root.resize_drag_start_mouse_x;
+                let local_delta_y = self.mouse-y - root.resize_drag_start_mouse_y;
+
+                // Compensate the drag hotspot's own origin movement during resize.
+                let origin_delta_x = (root.width - root.resize_drag_start_width) - (root.resize_hotspot - root.resize_drag_start_hotspot);
+                let origin_delta_y = (root.height - root.resize_drag_start_height) - (root.resize_hotspot - root.resize_drag_start_hotspot);
+                let delta_x = (local_delta_x + origin_delta_x) / 1px;
+                let delta_y = (local_delta_y + origin_delta_y) / 1px;
+                let axis_x = root.resize_drag_start_aspect;
+                let axis_y = 1.0;
+                let axis_len_sq = axis_x * axis_x + axis_y * axis_y;
+                let scale_delta = axis_len_sq > 0.0 ? (delta_x * axis_x + delta_y * axis_y) / axis_len_sq : 0.0;
+                let start_h = root.resize_drag_start_height / 1px;
+                let target_h_px = Math.max(1.0, start_h + scale_delta);
+                let target_w_px = target_h_px * root.resize_drag_start_aspect;
+                root.handle_resize_request(target_w_px, target_h_px);
+            }
+        }
+    }
+
+    Rectangle {
+        property <length> toast-max-width: 420px * root.ui_scale;
+        property <length> toast-horizontal-margin: 20px * root.ui_scale;
+        property <length> toast-height: 40px * root.ui_scale;
+        property <length> toast-target-width: root.width - toast-horizontal-margin * 2;
+        width: toast-target-width < toast-max-width ? toast-target-width : toast-max-width;
+        height: toast-height;
+        x: root.width - self.width - toast-horizontal-margin;
+        y: root.topbar-height + 14px * root.ui_scale;
+        z: 260;
+        visible: root.toast_visible || self.opacity > 0.01;
+        opacity: root.toast_visible ? 1.0 : 0.0;
+        background: root.toast_is_error ? #b91c1c : ThemeTokens.accent;
+        border-width: 1px * root.ui_scale;
+        border-color: root.toast_is_error ? #fecaca : ThemeTokens.border-dark;
+        border-radius: 4px * root.ui_scale;
+        drop-shadow-blur: 14px * root.ui_scale;
+        drop-shadow-color: ThemeTokens.shadow-medium;
+        drop-shadow-offset-y: 3px * root.ui_scale;
+        clip: true;
+        animate opacity {
+            duration: 180ms;
+            easing: ease-in-out;
+        }
+
+        Rectangle {
+            x: 0px;
+            y: 0px;
+            width: 4px * root.ui_scale;
+            height: parent.height;
+            background: root.toast_is_error ? #fca5a5 : #dbeafe;
+        }
+
+        Text {
+            x: 12px * root.ui_scale;
+            y: 0px;
+            width: parent.width - 24px * root.ui_scale;
+            height: parent.height;
+            text: root.toast_message;
+            color: ThemeTokens.text-on-accent;
+            font-size: 11px * root.ui_scale;
+            font-weight: ThemeTokens.font-weight-bold;
+            vertical-alignment: center;
+            overflow: elide;
+        }
+
+        TouchArea {
+            enabled: root.toast_visible;
+            clicked => {
+                root.toast_visible = false;
+                toast-hide-timer.running = false;
+            }
+        }
+    }
+
+    // Settings Overlay
+    // if root.settings_open: Rectangle { // Removed conditional rendering for animation
+    Rectangle {
+        x: root.settings_open || self.opacity > 0.01 ? 0px : -10000px; // Move off-screen when hidden
+        y: 0px;
+        width: parent.width;
+        height: parent.height;
+        z: 200;
+        background: ThemeTokens.dark-mode ? #000000b0 : #00000080;
+        opacity: root.settings_open ? 1.0 : 0.0;
+        animate opacity {
+            duration: 250ms;
+            easing: ease-in-out;
+        }
+
+        // Block interaction with elements below and close on click outside
+        TouchArea {
+            enabled: root.settings_open; // Only block when actively open
+            clicked => {
+                root.settings_open = false;
+            }
+        }
+
+        // Settings Dialog Box
+        Rectangle {
+            property <float> dialog_scale: root.settings_open ? 1.0 : 0.95;
+            animate dialog_scale {
+                duration: 250ms;
+                easing: ease-out-quart;
+            }
+            width: 500px * root.ui_scale * dialog_scale;
+            height: 300px * root.ui_scale * dialog_scale;
+            x: (parent.width - self.width) / 2;
+            y: (parent.height - self.height) / 2;
+            background: ThemeTokens.bg-main;
+            border-radius: 5px * root.ui_scale;
+            border-width: 1px * root.ui_scale;
+            border-color: ThemeTokens.border-light;
+            drop-shadow-blur: 20px * root.ui_scale;
+            drop-shadow-color: ThemeTokens.shadow-medium;
+            drop-shadow-offset-y: 8px * root.ui_scale;
+
+            // Header
+            Rectangle {
+                x: 0px;
+                y: 0px;
+                width: parent.width;
+                height: 48px * root.ui_scale;
+                background: ThemeTokens.bg-sidebar;
+                border-top-left-radius: 5px * root.ui_scale;
+                border-top-right-radius: 5px * root.ui_scale;
+                border-width: 0px;
+                Rectangle {
+                    x: 0px;
+                    y: parent.height - 1px * root.ui_scale;
+                    width: parent.width;
+                    height: 1px * root.ui_scale;
+                    background: ThemeTokens.border-light;
+                }
+
+                HorizontalLayout {
+                    padding-left: 16px * root.ui_scale;
+                    padding-right: 16px * root.ui_scale;
+                    padding-top: 10px * root.ui_scale; // (48 - 28) / 2 = 10px to vertically center
+                    padding-bottom: 10px * root.ui_scale;
+                    HorizontalLayout {
+                        spacing: 8px * root.ui_scale;
+                        Text {
+                            text: "⚙";
+                            color: ThemeTokens.text-medium;
+                            font-size: 18px * root.ui_scale;
+                            vertical-alignment: center;
+                        }
+
+                        Text {
+                            text: "SETTINGS";
+                            color: ThemeTokens.text-dark;
+                            font-size: 16px * root.ui_scale;
+                            font-weight: 700;
+                            vertical-alignment: center;
+                        }
+                    }
+
+                    Rectangle {
+                        horizontal-stretch: 1;
+                    }
+
+                    // Close X Button
+                    Rectangle {
+                        width: 28px * root.ui_scale;
+                        height: 28px * root.ui_scale;
+                        background: touch-close-x.has-hover ? #ef4444 : #00000000;
+                        border-radius: 4px * root.ui_scale;
+                        animate background { duration: 250ms; }
+                        Image {
+                            width: 14px * root.ui_scale;
+                            height: 14px * root.ui_scale;
+                            x: (parent.width - self.width) / 2;
+                            y: (parent.height - self.height) / 2;
+                            source: @image-url("../assets/close.svg");
+                            colorize: touch-close-x.has-hover ? #ffffff : ThemeTokens.text-light;
+                            animate colorize { duration: 250ms; }
+                        }
+
+                        touch-close-x := TouchArea {
+                            clicked => {
+                                root.settings_open = false;
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Body
+            Rectangle {
+                x: 0px;
+                y: 48px * root.ui_scale;
+                width: parent.width;
+                height: parent.height - 48px * root.ui_scale - 64px * root.ui_scale;
+                background: ThemeTokens.bg-main;
+                VerticalLayout {
+                    padding-left: 32px * root.ui_scale;
+                    padding-right: 32px * root.ui_scale;
+                    padding-top: 32px * root.ui_scale;
+                    padding-bottom: 32px * root.ui_scale;
+                    spacing: 20px * root.ui_scale;
+
+                    // Open Log Folder Row
+                    HorizontalLayout {
+                        spacing: 20px * root.ui_scale;
+                        Text {
+                            text: "Content Root:";
+                            color: ThemeTokens.text-medium;
+                            font-size: 13px * root.ui_scale;
+                            font-weight: ThemeTokens.font-weight-regular;
+                            vertical-alignment: center;
+                            horizontal-alignment: left;
+                        }
+
+                        Rectangle {
+                            horizontal-stretch: 1;
+                        }
+
+                        Rectangle {
+                            width: 160px * root.ui_scale;
+                            height: 34px * root.ui_scale;
+                                background: touch-open-content.has-hover ? ThemeTokens.input-bg-hover : ThemeTokens.input-bg;
+                            border-width: 1px * root.ui_scale;
+                            border-color: ThemeTokens.border-medium;
+                            border-radius: 2px * root.ui_scale;
+                            animate background { duration: 250ms; }
+                            HorizontalLayout {
+                                padding-left: 10px * root.ui_scale;
+                                padding-right: 10px * root.ui_scale;
+                                spacing: 8px * root.ui_scale;
+                                alignment: center;
+                                Text {
+                                    text: "📂 Content Folder";
+                                    color: ThemeTokens.text-dark;
+                                    font-size: 12px * root.ui_scale;
+                                    font-weight: ThemeTokens.font-weight-bold;
+                                    vertical-alignment: center;
+                                }
+                            }
+
+                            touch-open-content := TouchArea {
+                                clicked => {
+                                    root.open_preset_folder();
+                                }
+                            }
+                        }
+                    }
+
+                    // Guard Profile Row
+                    HorizontalLayout {
+                        spacing: 20px * root.ui_scale;
+                        Text {
+                            text: "Guard Profile:";
+                            color: ThemeTokens.text-medium;
+                            font-size: 13px * root.ui_scale;
+                            font-weight: ThemeTokens.font-weight-regular;
+                            vertical-alignment: center;
+                            horizontal-alignment: left;
+                        }
+
+                        Rectangle {
+                            horizontal-stretch: 1;
+                        }
+
+                        HorizontalLayout {
+                            spacing: 8px * root.ui_scale;
+                            width: 260px * root.ui_scale;
+                            // The new minimalist slider, no enclosure needed
+                            guard-slider := MixSlider {
+                                width: 160px * root.ui_scale;
+                                height: 32px * root.ui_scale;
+                                value: (root.settings_guard_draft_value_clamped + 2) / 3;
+                                default_value: 2.0 / 3.0;
+                                snap_steps: 3.0;
+                                changed(next) => {
+                                    let idx = Math.round(clamp(next, 0.0, 1.0) * 3.0);
+                                    let profile = idx < 0 ? -2 : (idx > 3 ? 1 : (idx - 2));
+                                    if (profile != root.settings_guard_draft_value) {
+                                        root.settings_guard_draft_value = profile;
+                                    }
+                                }
+                            }
+
+                            Rectangle {
+                                width: 92px * root.ui_scale;
+                                height: 32px * root.ui_scale;
+                                background: ThemeTokens.input-bg;
+                                border-width: 1px * root.ui_scale;
+                                border-color: ThemeTokens.border-light;
+                                border-radius: 2px * root.ui_scale;
+                                Text {
+                                    text: root.settings_guard_draft_text;
+                                    color: ThemeTokens.text-dark;
+                                    font-size: 11px * root.ui_scale;
+                                    font-weight: ThemeTokens.font-weight-bold;
+                                    horizontal-alignment: center;
+                                    vertical-alignment: center;
+                                }
+                            }
+                        }
+                    }
+
+                    Rectangle {
+                        vertical-stretch: 1;
+                    }
+                }
+            }
+
+            // Footer
+            Rectangle {
+                y: parent.height - 64px * root.ui_scale;
+                width: parent.width;
+                height: 64px * root.ui_scale;
+                background: ThemeTokens.bg-sidebar;
+                border-bottom-left-radius: 5px * root.ui_scale;
+                border-bottom-right-radius: 5px * root.ui_scale;
+                Rectangle {
+                    x: 0px;
+                    y: 0px;
+                    width: parent.width;
+                    height: 1px * root.ui_scale;
+                    background: ThemeTokens.border-light;
+                }
+
+                HorizontalLayout {
+                    padding: 16px * root.ui_scale;
+                    alignment: end;
+
+                    // SAVE Button
+                    Rectangle {
+                        width: 90px * root.ui_scale;
+                        height: 34px * root.ui_scale;
+                        background: root.settings_has_pending_changes ? (touch-save-btn.has-hover ? ThemeTokens.accent-hover : ThemeTokens.accent) : ThemeTokens.button-disabled-bg;
+                        border-radius: 2px * root.ui_scale;
+                        animate background { duration: 200ms; }
+                        Text {
+                            text: "SAVE";
+                            color: root.settings_has_pending_changes ? ThemeTokens.text-on-accent : ThemeTokens.text-disabled;
+                            font-size: 12px * root.ui_scale;
+                            font-weight: ThemeTokens.font-weight-bold;
+                            horizontal-alignment: center;
+                            vertical-alignment: center;
+                        }
+
+                        touch-save-btn := TouchArea {
+                            enabled: root.settings_has_pending_changes;
+                            clicked => {
+                                root.settings_guard_draft_value = root.settings_guard_draft_value_clamped;
+                                root.guard_profile_value = root.settings_guard_draft_value_clamped;
+                                root.guard_profile_changed(root.settings_guard_draft_value_clamped);
+                                root.settings_open = false;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    changed settings_open => {
+        if (settings_open) {
+            root.settings_guard_draft_value = root.guard_profile_value < -2 ? -2 : (root.guard_profile_value > 1 ? 1 : root.guard_profile_value);
+        }
+    }
+
+    // Slot Full Dialog Overlay (style aligned with Settings dialog)
+    Rectangle {
+        x: root.slot_full_dialog_open || self.opacity > 0.01 ? 0px : -10000px;
+        y: 0px;
+        width: parent.width;
+        height: parent.height;
+        z: 300;
+        background: ThemeTokens.overlay-soft;
+        opacity: root.slot_full_dialog_open ? 1.0 : 0.0;
+        animate opacity {
+            duration: 220ms;
+            easing: ease-in-out;
+        }
+
+        TouchArea {
+            enabled: root.slot_full_dialog_open;
+            clicked => {
+                root.slot_full_dialog_open = false;
+            }
+        }
+
+        Rectangle {
+            property <float> dialog_scale: root.slot_full_dialog_open ? 1.0 : 0.95;
+            animate dialog_scale {
+                duration: 220ms;
+                easing: ease-out-quart;
+            }
+            width: 440px * root.ui_scale * dialog_scale;
+            height: 228px * root.ui_scale * dialog_scale;
+            x: (parent.width - self.width) / 2;
+            y: (parent.height - self.height) / 2;
+            background: ThemeTokens.bg-main;
+            border-radius: 5px * root.ui_scale;
+            border-width: 1px * root.ui_scale;
+            border-color: ThemeTokens.border-light;
+            drop-shadow-blur: 20px * root.ui_scale;
+            drop-shadow-color: ThemeTokens.shadow-medium;
+            drop-shadow-offset-y: 8px * root.ui_scale;
+
+            Rectangle {
+                x: 0px;
+                y: 0px;
+                width: parent.width;
+                height: 48px * root.ui_scale;
+                background: ThemeTokens.bg-sidebar;
+                border-top-left-radius: 5px * root.ui_scale;
+                border-top-right-radius: 5px * root.ui_scale;
+                border-width: 0px;
+
+                Rectangle {
+                    x: 0px;
+                    y: parent.height - 1px * root.ui_scale;
+                    width: parent.width;
+                    height: 1px * root.ui_scale;
+                    background: ThemeTokens.border-light;
+                }
+
+                HorizontalLayout {
+                    padding-left: 16px * root.ui_scale;
+                    padding-right: 16px * root.ui_scale;
+                    padding-top: 10px * root.ui_scale;
+                    padding-bottom: 10px * root.ui_scale;
+
+                    HorizontalLayout {
+                        spacing: 8px * root.ui_scale;
+                        Text {
+                            text: "⚠";
+                            color: ThemeTokens.text-medium;
+                            font-size: 18px * root.ui_scale;
+                            vertical-alignment: center;
+                        }
+
+                        Text {
+                            text: root.slot_full_dialog_title;
+                            color: ThemeTokens.text-dark;
+                            font-size: 15px * root.ui_scale;
+                            font-weight: 700;
+                            vertical-alignment: center;
+                        }
+                    }
+
+                    Rectangle {
+                        horizontal-stretch: 1;
+                    }
+
+                    Rectangle {
+                        width: 28px * root.ui_scale;
+                        height: 28px * root.ui_scale;
+                        border-radius: 2px * root.ui_scale;
+                        background: touch-slot-full-close.has-hover ? ThemeTokens.dialog-close-hover : #00000000;
+                        animate background { duration: 180ms; }
+
+                        Text {
+                            text: "×";
+                            color: ThemeTokens.text-medium;
+                            font-size: 14px * root.ui_scale;
+                            horizontal-alignment: center;
+                            vertical-alignment: center;
+                        }
+
+                        touch-slot-full-close := TouchArea {
+                            clicked => {
+                                root.slot_full_dialog_open = false;
+                            }
+                        }
+                    }
+                }
+            }
+
+            Rectangle {
+                x: 0px;
+                y: 48px * root.ui_scale;
+                width: parent.width;
+                height: parent.height - 48px * root.ui_scale - 64px * root.ui_scale;
+                background: ThemeTokens.bg-main;
+
+                VerticalLayout {
+                    padding-left: 24px * root.ui_scale;
+                    padding-right: 24px * root.ui_scale;
+                    padding-top: 24px * root.ui_scale;
+                    padding-bottom: 24px * root.ui_scale;
+
+                    Text {
+                        text: root.slot_full_dialog_message;
+                        color: ThemeTokens.text-medium;
+                        font-size: 12px * root.ui_scale;
+                        horizontal-alignment: center;
+                        vertical-alignment: center;
+                        wrap: word-wrap;
+                    }
+                }
+            }
+
+            Rectangle {
+                y: parent.height - 64px * root.ui_scale;
+                width: parent.width;
+                height: 64px * root.ui_scale;
+                background: ThemeTokens.bg-sidebar;
+                border-bottom-left-radius: 5px * root.ui_scale;
+                border-bottom-right-radius: 5px * root.ui_scale;
+
+                Rectangle {
+                    x: 0px;
+                    y: 0px;
+                    width: parent.width;
+                    height: 1px * root.ui_scale;
+                    background: ThemeTokens.border-light;
+                }
+
+                HorizontalLayout {
+                    padding: 16px * root.ui_scale;
+                    alignment: end;
+
+                    Rectangle {
+                        width: 90px * root.ui_scale;
+                        height: 34px * root.ui_scale;
+                        background: touch-slot-full-ok.has-hover ? ThemeTokens.accent-hover : ThemeTokens.accent;
+                        border-radius: 2px * root.ui_scale;
+                        animate background { duration: 200ms; }
+
+                        Text {
+                            text: "OK";
+                            color: ThemeTokens.text-on-accent;
+                            font-size: 12px * root.ui_scale;
+                            font-weight: ThemeTokens.font-weight-bold;
+                            horizontal-alignment: center;
+                            vertical-alignment: center;
+                        }
+
+                        touch-slot-full-ok := TouchArea {
+                            clicked => {
+                                root.slot_full_dialog_open = false;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

@@ -1,0 +1,9 @@
+[package]
+name = "nih_plug_slint"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+nih_plug = { path = "../nih-plug" }
+plugin-canvas-slint = { path = "../plugin-things/plugin-canvas-slint" }
+raw-window-handle = "0.6"

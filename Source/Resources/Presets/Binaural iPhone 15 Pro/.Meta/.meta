@@ -1,0 +1,18 @@
+# Binaural iPhone 15 Pro Impulse Responses
+
+## 用途与背景
+由于目前大部分音乐都是通过 iPhone 播放的，使用 iPhone 15 Pro 的扬声器脉冲响应来检查混音是一个非常好的主意。此库提供了一种简单且有效的方法来模拟混音在最新 iPhone 扬声器上的表现。
+
+## 库内容说明
+该库包含两类主要的 IR：
+- **Stereo**: 普通立体声版本。
+- **True Stereo**: 包含真立体声串扰的版本。
+
+## 技术规格
+- **采样率**: 44.1kHz, 48kHz, 96kHz。
+- **格式**: WAV 格式（已移除冗余的 AIFF）。
+- **用法建议**: 请务必使用 **100% WET**！
+
+## 原厂信息
+- 提供方: PastToFutureReverbs
+- 来源: www.gumroad.com/pasttofuturereverbs

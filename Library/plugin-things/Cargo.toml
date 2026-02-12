@@ -1,0 +1,36 @@
+[workspace]
+resolver = "2"
+members = [
+    "examples/*",
+    "plinth-core",
+    "plinth-derive",
+    "plinth-plugin",
+    "plugin-canvas",
+    "plugin-canvas-slint",
+    "xtask",
+]
+
+[workspace.dependencies]
+plinth-core = { path = "plinth-core" }
+plinth-derive = { path = "plinth-derive" }
+plinth-plugin = { path = "plinth-plugin" }
+plugin-canvas = { path = "plugin-canvas" }
+plugin-canvas-slint = { path = "plugin-canvas-slint" }
+
+cursor-icon = "1.1"
+keyboard-types = "0.7"
+log = "0.4"
+num-traits = "0.2"
+portable-atomic = { version = "1.10", features = ["float", "serde"] }
+raw-window-handle = "0.6"
+slint = { version = "1.14.1", default-features = false, features = ["accessibility", "compat-1-2", "std"] }
+
+# Internal slint crate versions need to be pinned
+# since they don't maintain semver compatibility
+i-slint-common = "1.14.1"
+i-slint-core = "1.14.1"
+i-slint-renderer-skia = { version = "1.14.1", features = ["x11"] }
+
+[patch.crates-io]
+# FIXME: Needed for loading cursors to work, remove once the fix has shipped
+x11rb = { git = "https://github.com/psychon/x11rb" }

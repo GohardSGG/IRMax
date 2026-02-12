@@ -1,0 +1,8 @@
+[alias]
+xtask = "run -p xtask --"
+
+[target.x86_64-pc-windows-msvc]
+rustflags = ["-C", "target-cpu=x86-64-v3", "-C", "opt-level=3"]
+
+[env]
+CARGO_INCREMENTAL = "0"

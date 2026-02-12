@@ -1,0 +1,30 @@
+[workspace]
+
+members = [
+    "Source/IRMax_Core",
+    "Source/IRMax_Plugin",
+
+    "Source/Xtask",
+    "Library/M_GPUTest",
+]
+
+exclude = [
+    "Library/nih-plug",
+]
+
+resolver = "2"
+
+[workspace.package]
+version = "0.9.2"
+
+[workspace.dependencies]
+plugin-canvas = { path = "Library/plugin-things/plugin-canvas" }
+cursor-icon = "1.1"
+keyboard-types = "0.7"
+raw-window-handle = "0.6"
+portable-atomic = { version = "1.10", features = ["float", "serde"] }
+log = "0.4"
+slint = { version = "=1.14.1", default-features = false, features = ["accessibility", "compat-1-2", "std"] }
+i-slint-common = "1.14.1"
+i-slint-core = "1.14.1"
+i-slint-renderer-skia = { version = "1.14.1", features = ["x11"] }

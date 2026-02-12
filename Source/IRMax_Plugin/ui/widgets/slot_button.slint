@@ -1,0 +1,44 @@
+﻿import { ThemeTokens } from "../globals/theme.slint";
+
+export component SlotButton inherits Rectangle {
+    in property <float> uiscale: 1.0;
+    in property <string> label: "1";
+    in property <bool> active: false;
+    in property <bool> occupied: false;
+    callback clicked();
+    callback secondary_clicked();
+
+    width: 24px * root.uiscale;
+    height: 24px * root.uiscale;
+    border-radius: 2px * root.uiscale;
+
+    background: active ? ThemeTokens.accent : (touch.has-hover ? ThemeTokens.surface-hover : #00000000);
+    border-width: 1px * root.uiscale;
+    border-color: active ? ThemeTokens.accent : (touch.has-hover ? ThemeTokens.border-medium : (occupied ? ThemeTokens.border-dark : ThemeTokens.border-light));
+
+    animate background { duration: 250ms; }
+    animate border-color { duration: 250ms; }
+
+    Text {
+        text: root.label;
+        color: active ? ThemeTokens.text-on-accent : (occupied ? ThemeTokens.text-dark : ThemeTokens.text-light);
+        font-size: 12px * root.uiscale;
+        font-weight: ThemeTokens.font-weight-bold;
+        horizontal-alignment: center;
+        vertical-alignment: center;
+        width: parent.width;
+        height: parent.height;
+    }
+
+    touch := TouchArea {
+        clicked => {
+            root.clicked();
+        }
+
+        pointer-event(event) => {
+            if (event.button == PointerEventButton.right && event.kind == PointerEventKind.down) {
+                root.secondary_clicked();
+            }
+        }
+    }
+}

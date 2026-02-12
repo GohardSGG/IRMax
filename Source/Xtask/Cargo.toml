@@ -1,0 +1,8 @@
+[package]
+name = "xtask"
+version.workspace = true
+edition = "2021"
+
+[dependencies]
+anyhow = "1.0"
+nih_plug_xtask = { path = "../../Library/nih-plug/nih_plug_xtask" }
